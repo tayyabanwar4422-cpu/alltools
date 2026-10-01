@@ -1,0 +1,6 @@
+{
+  "name": "AllToolsHub - 12 Free Online Web Tools & Utilities",
+  "description": "High-performance, client-side web utility hub featuring 12 free tools: Video Downloader, Image Converter, BG Remover, PDF Maker, Birth Chart, Paint Calculator & more.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
