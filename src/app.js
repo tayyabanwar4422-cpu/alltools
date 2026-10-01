@@ -8,13 +8,15 @@
   const CONFIG = {
     SITE_NAME: "AllToolsHub",
     BASE_URL: "https://alltoolshub.com",
-    COBALT_API: "https://your-app.up.railway.app",
+    // ✅ FIXED: Your private Railway Cobalt instance
+    COBALT_API: "https://cobalt-production-e47a.up.railway.app",
+    // ✅ FIXED: No public fallbacks needed anymore
     COBALT_FALLBACK_APIS: [],
     TIKWM_API: "https://www.tikwm.com/api/",
     CORS_PROXIES: [
-      "https://api.cors.lol/?url=",
-      "https://corsfix.com/proxy?url=",
-      "https://api.allorigins.win/raw?url="
+      "https://api.allorigins.win/raw?url=",
+      "https://corsproxy.io/?",
+      "https://thingproxy.freeboard.io/fetch/"
     ],
     QR_API: "https://api.qrserver.com/v1/create-qr-code/",
     TIMEOUT_MS: 18000,
@@ -76,7 +78,6 @@
     let canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute("href", `${CONFIG.BASE_URL}/#${path}`);
 
-    // Update WebApplication schema
     const appScript = document.getElementById("json-ld-app");
     if (appScript) {
       if (appName) {
@@ -87,18 +88,13 @@
           "applicationCategory": "UtilitiesApplication",
           "operatingSystem": "All modern browsers",
           "description": description,
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-          }
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
         });
       } else {
         appScript.textContent = "";
       }
     }
 
-    // Update FAQPage schema
     const faqScript = document.getElementById("json-ld-faq");
     if (faqScript) {
       if (faqs.length > 0) {
@@ -108,10 +104,7 @@
           "mainEntity": faqs.map(f => ({
             "@type": "Question",
             "name": f.q,
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": f.a
-            }
+            "acceptedAnswer": { "@type": "Answer", "text": f.a }
           }))
         });
       } else {
@@ -119,7 +112,6 @@
       }
     }
 
-    // Update BreadcrumbList schema
     const bcScript = document.getElementById("json-ld-breadcrumb");
     if (bcScript && breadcrumbs.length > 0) {
       bcScript.textContent = JSON.stringify({
