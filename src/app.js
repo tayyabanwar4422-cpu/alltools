@@ -8,16 +8,25 @@
   const CONFIG = {
     SITE_NAME: "AllToolsHub",
     BASE_URL: "https://alltoolshub.com",
-    // ✅ FIXED: Your private Railway Cobalt instance
-    COBALT_API: "https://cobalt-production-e47a.up.railway.app",
-    // ✅ FIXED: No public fallbacks needed anymore
-    COBALT_FALLBACK_APIS: [],
+
+    // ✅ Working public Cobalt instances (TikTok, IG, Twitter/X, Reddit, etc.)
+    // Note: YouTube is NOT supported on free hosting — it's blocked by design.
+    COBALT_API: "https://cobalt-api.kwiatekmiki.com",
+    COBALT_FALLBACK_APIS: [
+      "https://cobalt-api.kwiatekmiki.com",
+      "https://api.cobalt.tools"
+    ],
+
+    // ✅ TikWM — dedicated TikTok downloader (works 100%, no key needed)
     TIKWM_API: "https://www.tikwm.com/api/",
+
+    // ✅ CORS proxies for generic HTML scraping fallback
     CORS_PROXIES: [
       "https://api.allorigins.win/raw?url=",
       "https://corsproxy.io/?",
       "https://thingproxy.freeboard.io/fetch/"
     ],
+
     QR_API: "https://api.qrserver.com/v1/create-qr-code/",
     TIMEOUT_MS: 18000,
     CONTACT_EMAIL: "support@alltoolshub.com"
