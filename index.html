@@ -33,6 +33,9 @@
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://alltoolshub.qd.je/" />
 
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23020617'/%3E%3Ctext x='50' y='72' font-size='70' text-anchor='middle' fill='%2310b981'%3E⚡%3C/text%3E%3C/svg%3E" />
+
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://alltoolshub.qd.je/" />
@@ -85,15 +88,12 @@
     .fade-up { animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
     .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6); border-color: #10b981; }
-    .ad-slot { background: rgba(15, 23, 42, 0.6); border: 1px dashed #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.2s; min-height: 90px; }
-    .ad-slot:hover { border-color: #64748b; }
-    .ad-slot-mobile { min-height: 50px; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
 
   <!-- ============================================= -->
-  <!-- TOP AD SLOT — Adsterra 728x90 (desktop) + 320x50 (mobile) -->
+  <!-- TOP AD — Adsterra 728x90 (desktop) + 320x50 (mobile) -->
   <!-- ============================================= -->
   <div class="w-full bg-slate-900 border-b border-slate-800 py-2.5 px-4 flex justify-center">
     <!-- Desktop 728x90 Banner -->
@@ -228,27 +228,12 @@
   <main id="app" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"></main>
 
   <!-- ============================================= -->
-  <!-- NATIVE BANNER AD (Adsterra) — displays on every page -->
+  <!-- BOTTOM NATIVE AD (Adsterra) -->
   <!-- ============================================= -->
-  <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
-    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex justify-center min-h-[100px] items-center" id="ad-native-wrap">
+  <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+    <div class="flex justify-center items-center min-h-[100px]">
       <script async="async" data-cfasync="false" src="https://pl31657544.profitableratecpmnetwork.com/b467aa068398abea0ff06ceb2c59260c/invoke.js"></script>
       <div id="container-b467aa068398abea0ff06ceb2c59260c"></div>
-    </div>
-  </div>
-
-  <!-- ============================================= -->
-  <!-- BOTTOM AD SLOT — Second 728x90 + Second 320x50 (placeholder — create more units for higher revenue) -->
-  <!-- ============================================= -->
-  <div class="w-full bg-slate-900 border-t border-slate-800 py-3 px-4 flex justify-center">
-    <div class="ad-slot w-full max-w-[728px] h-[90px] hidden md:flex rounded text-xs text-slate-400 relative" id="ad-bottom-desktop">
-      <span class="text-[10px] tracking-widest text-slate-400 uppercase font-bold mb-1">Sponsored Advertisement</span>
-      <span class="text-xs text-slate-300">Adsterra Bottom 728×90 Leaderboard</span>
-      <!-- Optional: Create a 2nd 728x90 banner unit in Adsterra and paste it here for more revenue -->
-    </div>
-    <div class="ad-slot ad-slot-mobile w-[320px] h-[50px] md:hidden flex rounded text-xs text-slate-400 relative" id="ad-bottom-mobile">
-      <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Adsterra 320×50 Mobile Bottom Slot</span>
-      <!-- Optional: Create a 2nd 320x50 banner unit in Adsterra and paste it here -->
     </div>
   </div>
 
