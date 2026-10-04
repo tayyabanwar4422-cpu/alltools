@@ -7,26 +7,18 @@
 
   const CONFIG = {
     SITE_NAME: "AllToolsHub",
-    BASE_URL: "https://alltoolshub.com",
-
-    // ✅ Working public Cobalt instances (TikTok, IG, Twitter/X, Reddit, etc.)
-    // Note: YouTube is NOT supported on free hosting — it's blocked by design.
+    BASE_URL: "https://alltoolshub.qd.je",
     COBALT_API: "https://cobalt-api.kwiatekmiki.com",
     COBALT_FALLBACK_APIS: [
       "https://cobalt-api.kwiatekmiki.com",
       "https://api.cobalt.tools"
     ],
-
-    // ✅ TikWM — dedicated TikTok downloader (works 100%, no key needed)
     TIKWM_API: "https://www.tikwm.com/api/",
-
-    // ✅ CORS proxies for generic HTML scraping fallback
     CORS_PROXIES: [
       "https://api.allorigins.win/raw?url=",
       "https://corsproxy.io/?",
       "https://thingproxy.freeboard.io/fetch/"
     ],
-
     QR_API: "https://api.qrserver.com/v1/create-qr-code/",
     TIMEOUT_MS: 18000,
     CONTACT_EMAIL: "support@alltoolshub.com"
@@ -37,10 +29,7 @@
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
-      const response = await fetch(resource, {
-        ...options,
-        signal: controller.signal
-      });
+      const response = await fetch(resource, { ...options, signal: controller.signal });
       clearTimeout(id);
       return response;
     } catch (err) {
@@ -136,13 +125,24 @@
     }
   }
 
-  // Common Ad-Slot HTML renderer
+  // ✅ FIXED: In-Feed Ad Slot renderer with REAL Adsterra Native Banner
   function renderAdSlot(slotName) {
+    // Generate a unique container ID so multiple native ads on the same page don't conflict
+    const uniqueId = "ad-native-" + Math.random().toString(36).substring(2, 10);
     return `
-      <div class="my-8 ad-slot w-full py-4 px-4 rounded-xl text-center bg-slate-900/60 border border-slate-800">
-        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Sponsored Banner (${slotName})</span>
-        <div class="text-xs text-slate-400">Adsterra In-Feed Native / Banner Unit</div>
-        <div class="text-[10px] text-slate-400 mt-1 font-mono">&lt;!-- Replace with Adsterra Code --&gt;</div>
+      <div class="my-8 w-full flex justify-center min-h-[100px] items-center">
+        <div id="${uniqueId}" class="w-full max-w-3xl"></div>
+        <script async="async" data-cfasync="false" src="https://pl31657544.profitableratecpmnetwork.com/b467aa068398abea0ff06ceb2c59260c/invoke.js"></script>
+        <script>
+          (function() {
+            var container = document.getElementById('${uniqueId}');
+            if (container && !container.querySelector('iframe')) {
+              var adDiv = document.createElement('div');
+              adDiv.id = 'container-b467aa068398abea0ff06ceb2c59260c';
+              container.appendChild(adDiv);
+            }
+          })();
+        </script>
       </div>
     `;
   }
@@ -202,7 +202,6 @@
   function renderRelatedTools(currentToolKey) {
     const list = [
       { key: "video-downloader", name: "All Video Downloader", icon: "🎬", path: "#/tools/video-downloader" },
-      { key: "youtube-downloader", name: "YouTube MP4 & MP3", icon: "▶️", path: "#/tools/youtube-downloader" },
       { key: "image-converter", name: "Image Converter & BG Remover", icon: "🖼️", path: "#/tools/image-converter" },
       { key: "image-to-pdf", name: "Image to PDF Converter", icon: "📄", path: "#/tools/image-to-pdf" },
       { key: "birth-chart-calculator", name: "Birth Chart Calculator", icon: "✨", path: "#/tools/birth-chart-calculator" },
