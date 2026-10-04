@@ -1,6 +1,6 @@
 /**
  * AllToolsHub - Router & Informational Pages
- * Home Page (Hero + 12-Tool Grid + SEO Copy + Ad Slots)
+ * Home Page (Hero + 11-Tool Grid + SEO Copy + Ad Slots)
  * About Page, Privacy Policy, Terms of Service, Contact
  */
 (function() {
@@ -12,16 +12,15 @@
   // -------------------------------------------------------------
   function renderHome(container) {
     updateSEO({
-      title: "AllToolsHub - 12 Free Fast Online Web Utilities (No Installs, No Cost)",
-      description: "Access 12 free web tools: Video Downloader, YouTube MP3, Image Converter, BG Remover, Image to PDF, Birth Chart, Paint Calculator & Password Generator.",
+      title: "AllToolsHub - 11 Free Fast Online Web Utilities (No Installs, No Cost)",
+      description: "Access 11 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Paint Calculator & Password Generator.",
       path: "/",
       appName: "AllToolsHub Suite",
       breadcrumbs: [{ name: "Home", path: "/" }]
     });
 
     const tools = [
-      { key: "video-downloader", name: "All Video Downloader", icon: "🎬", tag: "TikTok, YT, IG, X, Reddit", desc: "Download HD video streams from 1000+ social and video streaming platforms with auto-detection.", link: "#/tools/video-downloader" },
-      { key: "youtube-downloader", name: "YouTube Video & MP3", icon: "▶️", tag: "1080p & 320k Audio", desc: "Dedicated high-bitrate YouTube converter supporting MP4 video and crystal clear MP3 extractions.", link: "#/tools/youtube-downloader" },
+      { key: "video-downloader", name: "All Video Downloader", icon: "🎬", tag: "TikTok, IG, X, Reddit", desc: "Download HD video streams from 1000+ social and video streaming platforms with auto-detection.", link: "#/tools/video-downloader" },
       { key: "image-converter", name: "Image Converter & BG Remover", icon: "🖼️", tag: "PNG, JPG, WebP + Cutout", desc: "Batch convert image formats, scale pixel dimensions, and remove backgrounds with client-side AI masking.", link: "#/tools/image-converter" },
       { key: "image-to-pdf", name: "Image to PDF Converter", icon: "📄", tag: "Multi-Image Compiler", desc: "Merge multiple JPG, PNG, and WebP pictures into a clean printable PDF with custom page geometry.", link: "#/tools/image-to-pdf" },
       { key: "wechat-downloader", name: "WeChat Video Downloader", icon: "💬", tag: "Public Article Media", desc: "Inspect and extract public embedded video media from WeChat official account articles.", link: "#/tools/wechat-downloader" },
@@ -39,7 +38,7 @@
         <!-- Hero Section -->
         <section class="text-center py-8 sm:py-16 max-w-4xl mx-auto space-y-5 fade-up">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span>✨</span> 12 Production-Grade Utilities • 100% Free & Client-Side
+            <span>✨</span> 11 Production-Grade Utilities • 100% Free & Client-Side
           </div>
           <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
             High-Speed Web Tools, <br class="hidden sm:inline" />
@@ -58,9 +57,6 @@
           </div>
         </section>
 
-        <!-- Top Ad Placement -->
-        ${renderAdSlot("Home Top In-Feed")}
-
         <!-- 3-Column Responsive Tool Grid -->
         <section aria-label="Available Utilities Grid" class="space-y-6">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
@@ -68,7 +64,7 @@
               <h2 class="text-xl sm:text-2xl font-extrabold text-white">All Utilities</h2>
               <p class="text-xs text-slate-400 mt-0.5">Select any tool below to launch instantly in your browser</p>
             </div>
-            <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">12 Ready</span>
+            <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">11 Ready</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -90,9 +86,6 @@
             `).join("")}
           </div>
         </section>
-
-        <!-- Middle Ad Placement -->
-        ${renderAdSlot("Home Mid-Page Native")}
 
         <!-- Comprehensive SEO Copy: Why Use AllToolsHub? -->
         <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 space-y-6 text-slate-300">
@@ -158,7 +151,6 @@
           <p class="text-sm text-slate-400">Democratizing private, high-performance web utilities for global creators, professionals, and students.</p>
         </div>
 
-        <!-- Mission -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
             <span>🎯</span> Our Mission
@@ -168,7 +160,6 @@
           </p>
         </div>
 
-        <!-- Monetization Transparency -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
             <span>💼</span> How We Make Money
@@ -181,7 +172,6 @@
           </p>
         </div>
 
-        <!-- Privacy First -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
             <span>🛡️</span> Privacy-First Architecture
@@ -191,7 +181,6 @@
           </p>
         </div>
 
-        <!-- Contact Us -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
             <span>📬</span> Contact Us
@@ -204,8 +193,6 @@
             <a href="mailto:${CONFIG.CONTACT_EMAIL}" class="text-emerald-400 font-mono font-bold hover:underline">${CONFIG.CONTACT_EMAIL}</a>
           </div>
         </div>
-
-        ${renderAdSlot("About Page Bottom")}
       </div>
     `;
   }
@@ -239,7 +226,7 @@
 
           <h2 class="text-base font-bold text-white pt-2">3. External Links & Media Providers</h2>
           <p class="text-slate-400">
-            Our video downloading utilities interface with public media endpoints (such as TikTok, YouTube, and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
+            Our video downloading utilities interface with public media endpoints (such as TikTok, Instagram, and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
           </p>
 
           <h2 class="text-base font-bold text-white pt-2">4. Contact Information</h2>
@@ -345,7 +332,6 @@
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    // Route matching table
     switch (path) {
       case "/":
         renderHome(app);
@@ -362,12 +348,9 @@
       case "/contact":
         renderContact(app);
         break;
-      // Tools
+      // Tools (YouTube removed)
       case "/tools/video-downloader":
         window.APP.renderVideoDownloader(app);
-        break;
-      case "/tools/youtube-downloader":
-        window.APP.renderYouTubeDownloader(app);
         break;
       case "/tools/image-converter":
         window.APP.renderImageConverter(app);
@@ -427,7 +410,6 @@
     handleRoute();
   });
 
-  // If DOM is already loaded
   if (document.readyState === "complete" || document.readyState === "interactive") {
     initMobileMenu();
     handleRoute();
