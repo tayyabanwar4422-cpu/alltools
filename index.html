@@ -9,12 +9,8 @@
       try {
         let _currentFetch = window.fetch;
         Object.defineProperty(window, 'fetch', {
-          get: function () {
-            return _currentFetch;
-          },
-          set: function (fn) {
-            _currentFetch = fn;
-          },
+          get: function () { return _currentFetch; },
+          set: function (fn) { _currentFetch = fn; },
           configurable: true,
           enumerable: true
         });
@@ -22,12 +18,8 @@
         try {
           let _currentFetch = Window.prototype.fetch;
           Object.defineProperty(Window.prototype, 'fetch', {
-            get: function () {
-              return _currentFetch;
-            },
-            set: function (fn) {
-              _currentFetch = fn;
-            },
+            get: function () { return _currentFetch; },
+            set: function (fn) { _currentFetch = fn; },
             configurable: true,
             enumerable: true
           });
@@ -39,11 +31,11 @@
   <meta name="description" content="100% free, private client-side utilities: Video Downloader, YouTube MP3, Image Converter, BG Remover, PDF Maker, Birth Chart, Paint Calculator & more." />
   <meta name="keywords" content="video downloader, image converter, remove background, image to pdf, age calculator, birth chart, paint calculator, qr code generator, title generator" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://alltoolshub.com/" />
+  <link rel="canonical" href="https://alltoolshub.qd.je/" />
 
   <!-- Open Graph / Twitter Card -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://alltoolshub.com/" />
+  <meta property="og:url" content="https://alltoolshub.qd.je/" />
   <meta property="og:title" content="AllToolsHub - 12 Free Fast Online Web Utilities" />
   <meta property="og:description" content="Free client-side tools with zero data collection: download videos, convert images, calculate birth charts, format PDFs, and more." />
   <meta property="og:image" content="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=630&fit=crop" />
@@ -57,7 +49,7 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "AllToolsHub",
-    "url": "https://alltoolshub.com"
+    "url": "https://alltoolshub.qd.je"
   }
   </script>
   <script id="json-ld-app" type="application/ld+json"></script>
@@ -84,12 +76,8 @@
   <!-- Celestine Astrological Ephemeris via CDN -->
   <script>
     import('https://cdn.jsdelivr.net/npm/celestine@0.2.1/+esm')
-      .then(function (m) {
-        window.Celestine = m;
-      })
-      .catch(function (err) {
-        console.warn('Celestine CDN load failed, fallback will be used:', err);
-      });
+      .then(function (m) { window.Celestine = m; })
+      .catch(function (err) { console.warn('Celestine CDN load failed, fallback will be used:', err); });
   </script>
 
   <style>
@@ -97,22 +85,42 @@
     .fade-up { animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
     .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6); border-color: #10b981; }
-    .ad-slot { background: rgba(15, 23, 42, 0.6); border: 1px dashed #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.2s; }
+    .ad-slot { background: rgba(15, 23, 42, 0.6); border: 1px dashed #334155; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; transition: border-color 0.2s; min-height: 90px; }
     .ad-slot:hover { border-color: #64748b; }
+    .ad-slot-mobile { min-height: 50px; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
 
-  <!-- Top Ad Slot (728x90 Desktop / 320x50 Mobile) -->
+  <!-- ============================================= -->
+  <!-- TOP AD SLOT — Adsterra 728x90 (desktop) + 320x50 (mobile) -->
+  <!-- ============================================= -->
   <div class="w-full bg-slate-900 border-b border-slate-800 py-2.5 px-4 flex justify-center">
-    <div class="ad-slot w-full max-w-[728px] h-[90px] hidden md:flex rounded text-xs text-slate-400 relative" id="ad-top-desktop">
-      <span class="text-[10px] tracking-widest text-slate-400 uppercase font-bold mb-1">Sponsored Advertisement</span>
-      <span class="text-xs text-slate-300">Adsterra 728×90 Leaderboard Placement</span>
-      <!-- Paste Adsterra 728x90 script here -->
+    <!-- Desktop 728x90 Ad -->
+    <div class="w-full max-w-[728px] hidden md:flex justify-center items-center" id="ad-top-desktop">
+      <script type="text/javascript">
+        atOptions = {
+          'key' : '584da72bc2fee02b30f09794ec2470eb',
+          'format' : 'iframe',
+          'height' : 90,
+          'width' : 728,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="https://www.highrevenueformat.com/584da72bc2fee02b30f09794ec2470eb/invoke.js"></script>
     </div>
-    <div class="ad-slot w-[320px] h-[50px] md:hidden flex rounded text-xs text-slate-400 relative" id="ad-top-mobile">
-      <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Adsterra 320×50 Mobile Slot</span>
-      <!-- Paste Adsterra 320x50 script here -->
+    <!-- Mobile 320x50 Ad -->
+    <div class="w-[320px] h-[50px] md:hidden flex justify-center items-center" id="ad-top-mobile">
+      <script type="text/javascript">
+        atOptions = {
+          'key' : 'b937beccf6a087f7b528a6b0967e018a',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" src="https://www.highrevenueformat.com/b937beccf6a087f7b528a6b0967e018a/invoke.js"></script>
     </div>
   </div>
 
@@ -130,13 +138,13 @@
       <!-- Desktop Nav -->
       <nav class="hidden md:flex items-center gap-6" aria-label="Main Navigation">
         <a href="#/" class="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2">Home</a>
-        
+
         <div class="relative group">
           <button type="button" class="flex items-center gap-1.5 text-sm font-medium text-slate-300 group-hover:text-emerald-400 transition-colors py-2 focus:outline-none">
             <span>Tools (12)</span>
             <svg class="w-4 h-4 transition-transform group-hover:rotate-180 text-slate-400 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </button>
-          
+
           <div class="absolute left-0 mt-2 w-80 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 grid grid-cols-1 gap-1">
             <a href="#/tools/video-downloader" class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-emerald-400 transition">
               <span>🎬</span><div><div class="text-xs font-semibold">All Video Downloader</div><div class="text-[10px] text-slate-400">TikTok, YT, IG, X, Reddit</div></div>
@@ -179,7 +187,7 @@
 
         <a href="#/about" class="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2">About</a>
         <a href="#/privacy" class="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2">Privacy</a>
-        
+
         <a href="#/tools/video-downloader" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-105">
           Launch Tools
         </a>
@@ -223,16 +231,18 @@
   <!-- Dynamic SPA Main Outlet -->
   <main id="app" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"></main>
 
-  <!-- Bottom Ad Slot (728x90 Desktop / 320x50 Mobile) -->
+  <!-- ============================================= -->
+  <!-- BOTTOM AD SLOT — add your second Adsterra 728x90 + 320x50 unit here -->
+  <!-- ============================================= -->
   <div class="w-full bg-slate-900 border-t border-slate-800 py-3 px-4 flex justify-center">
     <div class="ad-slot w-full max-w-[728px] h-[90px] hidden md:flex rounded text-xs text-slate-400 relative" id="ad-bottom-desktop">
       <span class="text-[10px] tracking-widest text-slate-400 uppercase font-bold mb-1">Sponsored Advertisement</span>
-      <span class="text-xs text-slate-300">Adsterra Bottom 728×90 Leaderboard / Native Strip</span>
-      <!-- Paste Adsterra bottom 728x90 script here -->
+      <span class="text-xs text-slate-300">Adsterra Bottom 728×90 Leaderboard</span>
+      <!-- PASTE YOUR SECOND 728x90 ADSTERRA CODE HERE -->
     </div>
-    <div class="ad-slot w-[320px] h-[50px] md:hidden flex rounded text-xs text-slate-400 relative" id="ad-bottom-mobile">
+    <div class="ad-slot ad-slot-mobile w-[320px] h-[50px] md:hidden flex rounded text-xs text-slate-400 relative" id="ad-bottom-mobile">
       <span class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Adsterra 320×50 Mobile Bottom Slot</span>
-      <!-- Paste Adsterra bottom 320x50 script here -->
+      <!-- PASTE YOUR SECOND 320x50 ADSTERRA CODE HERE -->
     </div>
   </div>
 
@@ -282,7 +292,7 @@
             <li><a href="#/privacy" class="hover:text-emerald-400 transition">Privacy Policy (Client-Side)</a></li>
             <li><a href="#/terms" class="hover:text-emerald-400 transition">Terms of Service</a></li>
             <li><a href="#/contact" class="hover:text-emerald-400 transition">Contact & Feedback</a></li>
-            <li><a href="https://alltoolshub.com/sitemap.xml" target="_blank" class="hover:text-emerald-400 transition">XML Sitemap</a></li>
+            <li><a href="/sitemap.xml" target="_blank" class="hover:text-emerald-400 transition">XML Sitemap</a></li>
           </ul>
           <div class="mt-4 p-2.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
             <span class="text-emerald-400 font-semibold">Adsterra Partner:</span> Clean ads fund our free serverless architecture.
@@ -299,6 +309,12 @@
       </div>
     </div>
   </footer>
+
+  <!-- ============================================= -->
+  <!-- POPUNDER / DIRECT-LINK ADS (fire once per session) -->
+  <!-- ============================================= -->
+  <script type="text/javascript" src="https://pl31612887.profitableratecpmnetwork.com/c7/c8/ce/c7c8ce0ea47e6a60033f7deb85452105.js"></script>
+  <script type="text/javascript" src="https://pl31612888.profitableratecpmnetwork.com/72/51/88/7251883475e2e7657ce3be5853924848.js"></script>
 
   <!-- Application Logic (Vanilla JS, No Modules, file:/// Compatible) -->
   <script src="/src/app.js"></script>
