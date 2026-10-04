@@ -1,5 +1,6 @@
 /**
  * AllToolsHub - Router & Informational Pages
+ * Created by Tayyab Anwar
  * Home Page (Hero + 12-Tool Grid + SEO Copy + Ad Slots)
  * About Page, Privacy Policy, Terms of Service, Contact
  */
@@ -10,7 +11,7 @@
   function renderHome(container) {
     updateSEO({
       title: "AllToolsHub - 12 Free Fast Online Web Utilities (No Installs, No Cost)",
-      description: "Access 12 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Numerology, Paint Calculator & Password Generator.",
+      description: "Access 12 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Numerology, Paint Calculator & Password Generator. Built by Tayyab Anwar.",
       path: "/",
       appName: "AllToolsHub Suite",
       breadcrumbs: [{ name: "Home", path: "/" }]
@@ -35,7 +36,7 @@
       <div class="space-y-12">
         <section class="text-center py-8 sm:py-16 max-w-4xl mx-auto space-y-5 fade-up">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span>✨</span> 12 Production-Grade Utilities • 100% Free & Client-Side
+            <span>✨</span> 12 Production-Grade Utilities • by <strong class="text-emerald-300 font-bold">Tayyab Anwar</strong>
           </div>
           <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
             High-Speed Web Tools, <br class="hidden sm:inline" />
@@ -125,12 +126,12 @@
   function renderAbout(container) {
     updateSEO({
       title: "About AllToolsHub - Free, Fast, Private Web Utilities",
-      description: "Learn about the AllToolsHub mission, client-side privacy architecture, transparent advertising partnership with Adsterra, and zero-cost model.",
+      description: "Learn about the AllToolsHub mission, client-side privacy architecture, transparent advertising partnership with Adsterra, and zero-cost model. Built by Tayyab Anwar.",
       path: "/about",
       faqs: [
         { q: "How is AllToolsHub funded?", a: "AllToolsHub is 100% funded through unobtrusive display advertising via Adsterra. We never charge subscription fees or sell user data." },
         { q: "Do you store any uploaded images or converted files?", a: "No. All graphic conversions, PDF generation, and calculations happen client-side in your browser. We have no back-end database storing your media." },
-        { q: "Who creates and maintains these tools?", a: "AllToolsHub is engineered by veteran frontend and performance engineers dedicated to delivering serverless, open-web utilities." }
+        { q: "Who creates and maintains these tools?", a: "AllToolsHub is designed and built by Tayyab Anwar, a frontend engineer dedicated to delivering serverless, open-web utilities." }
       ],
       breadcrumbs: [{ name: "Home", path: "/" }, { name: "About Us", path: "/about" }]
     });
@@ -141,6 +142,28 @@
           <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Our Organization</span>
           <h1 class="text-3xl sm:text-4xl font-black text-white">About AllToolsHub</h1>
           <p class="text-sm text-slate-400">Democratizing private, high-performance web utilities for global creators, professionals, and students.</p>
+        </div>
+
+        <!-- Developer Card -->
+        <div class="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-emerald-500/60 via-teal-400/40 to-emerald-500/60">
+          <div class="rounded-2xl bg-slate-950 p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-emerald-500/30 shrink-0">
+                TA
+              </div>
+              <div class="text-center sm:text-left flex-1">
+                <p class="text-[10px] uppercase tracking-widest text-emerald-400/80 font-bold mb-1">Designed &amp; Developed by</p>
+                <h2 class="text-2xl font-black shimmer-name mb-2">Tayyab Anwar</h2>
+                <p class="text-xs text-slate-400 leading-relaxed mb-3">
+                  Full-stack frontend engineer building fast, privacy-first, serverless web applications. Passionate about delivering zero-cost tools that respect user data and perform flawlessly on any device.
+                </p>
+                <a href="https://github.com/tayabanwar4422-cpu" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+                  github.com/tayabanwar4422-cpu
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
@@ -255,7 +278,7 @@
   function renderContact(container) {
     updateSEO({
       title: "Contact Us - Support & Business Inquiries",
-      description: "Get in touch with the AllToolsHub technical and advertising team for feature requests, bug reports, and commercial inquiries.",
+      description: "Get in touch with Tayyab Anwar and the AllToolsHub team for feature requests, bug reports, and commercial inquiries.",
       path: "/contact",
       breadcrumbs: [{ name: "Home", path: "/" }, { name: "Contact Us", path: "/contact" }]
     });
@@ -264,7 +287,7 @@
       <div class="max-w-2xl mx-auto space-y-6 fade-up">
         <div class="text-center space-y-2">
           <h1 class="text-3xl font-black text-white">Get in Touch</h1>
-          <p class="text-xs sm:text-sm text-slate-400">Have feedback or want to partner with AllToolsHub? Send us a message.</p>
+          <p class="text-xs sm:text-sm text-slate-400">Have feedback or want to partner with AllToolsHub? Send a message directly to Tayyab Anwar.</p>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
