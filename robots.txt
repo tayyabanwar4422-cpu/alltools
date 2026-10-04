@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-# Sitemaps
-Sitemap: https://alltoolshub.com/sitemap.xml
+Sitemap: https://alltoolshub.qd.je/sitemap.xml
