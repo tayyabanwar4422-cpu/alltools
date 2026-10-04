@@ -1,6 +1,6 @@
 /**
  * AllToolsHub - Calculators & Generator Tools
- * Tool 6: Birth Chart Calculator (Sun, Moon, Rising)
+ * Tool 6: Birth Chart Calculator (Sun, Moon, Rising) — ACCURATE VERSION
  * Tool 7: Age Calculator
  * Tool 8: Paint Calculator
  * Tool 9: Title Generator
@@ -10,56 +10,110 @@
  */
 (function() {
   "use strict";
-  // ✅ FIXED: Added CONFIG to the destructured variables
   const { CONFIG, showToast, updateSEO, renderAdSlot, renderToolHeader, renderFaqs, renderRelatedTools } = window.APP;
 
   // -------------------------------------------------------------
-  // TOOL 6: Birth Chart Calculator (Sun, Moon, Rising)
+  // TOOL 6: Birth Chart Calculator (ACCURATE astronomical math)
   // -------------------------------------------------------------
   function renderBirthChart(container) {
     updateSEO({
       title: "Free Birth Chart Calculator - Sun, Moon and Rising Sign",
-      description: "Discover your astrological Big Three: Sun, Moon, and Ascendant (Rising) signs with our accurate, client-side birth chart calculator.",
+      description: "Discover your astrological Big Three: Sun, Moon, and Ascendant (Rising) signs with accurate astronomical calculations.",
       path: "/tools/birth-chart-calculator",
       appName: "Birth Chart Calculator",
       faqs: [
         { q: "What is the 'Big Three' in astrology?", a: "Your Sun sign represents core ego and purpose, your Moon sign governs emotions and subconscious desires, and your Rising (Ascendant) sign is your outward social persona." },
-        { q: "Why is exact birth time needed for the Rising sign?", a: "The Rising sign changes roughly every two hours as the Earth rotates, making exact birth time crucial for accuracy." }
+        { q: "Why is exact birth time needed for the Rising sign?", a: "The Rising sign changes roughly every two hours as the Earth rotates, making exact birth time crucial for accuracy." },
+        { q: "Does the birth city matter?", a: "Yes. Latitude affects the Ascendant calculation significantly. Our tool uses a built-in database of major world cities to determine coordinates automatically." }
       ],
       breadcrumbs: [{ name: "Home", path: "/" }, { name: "Birth Chart Calculator", path: "/tools/birth-chart-calculator" }]
     });
 
     const zodiacSigns = [
-      { name: "Aries", symbol: "♈", element: "Fire", dates: "Mar 21 - Apr 19", traits: "Bold, ambitious, pioneering, energetic", iconBg: "bg-rose-500/10 text-rose-400 border-rose-500/30" },
-      { name: "Taurus", symbol: "♉", element: "Earth", dates: "Apr 20 - May 20", traits: "Grounded, tenacious, dependable, sensual", iconBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" },
-      { name: "Gemini", symbol: "♊", element: "Air", dates: "May 21 - Jun 20", traits: "Curious, witty, expressive, adaptable", iconBg: "bg-amber-500/10 text-amber-400 border-amber-500/30" },
-      { name: "Cancer", symbol: "♋", element: "Water", dates: "Jun 21 - Jul 22", traits: "Intuitive, nurturing, empathetic, protective", iconBg: "bg-sky-500/10 text-sky-400 border-sky-500/30" },
-      { name: "Leo", symbol: "♌", element: "Fire", dates: "Jul 23 - Aug 22", traits: "Radiant, charismatic, theatrical, generous", iconBg: "bg-orange-500/10 text-orange-400 border-orange-500/30" },
-      { name: "Virgo", symbol: "♍", element: "Earth", dates: "Aug 23 - Sep 22", traits: "Analytical, methodical, helpful, meticulous", iconBg: "bg-teal-500/10 text-teal-400 border-teal-500/30" },
-      { name: "Libra", symbol: "♎", element: "Air", dates: "Sep 23 - Oct 22", traits: "Harmonious, diplomatic, aesthetic, fair-minded", iconBg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30" },
-      { name: "Scorpio", symbol: "♏", element: "Water", dates: "Oct 23 - Nov 21", traits: "Intense, perceptive, transformative, magnetic", iconBg: "bg-purple-500/10 text-purple-400 border-purple-500/30" },
-      { name: "Sagittarius", symbol: "♐", element: "Fire", dates: "Nov 22 - Dec 21", traits: "Philosophical, adventurous, optimistic, free", iconBg: "bg-violet-500/10 text-violet-400 border-violet-500/30" },
-      { name: "Capricorn", symbol: "♑", element: "Earth", dates: "Dec 22 - Jan 19", traits: "Strategic, disciplined, patient, resilient", iconBg: "bg-stone-500/10 text-stone-400 border-stone-500/30" },
-      { name: "Aquarius", symbol: "♒", element: "Air", dates: "Jan 20 - Feb 18", traits: "Visionary, eccentric, humanitarian, inventive", iconBg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
-      { name: "Pisces", symbol: "♓", element: "Water", dates: "Feb 19 - Mar 20", traits: "Dreamy, mystical, poetic, boundless compassion", iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/30" }
+      { name: "Aries", symbol: "♈", element: "Fire", dates: "Mar 21 - Apr 19", traits: "Bold, ambitious, pioneering, energetic" },
+      { name: "Taurus", symbol: "♉", element: "Earth", dates: "Apr 20 - May 20", traits: "Grounded, tenacious, dependable, sensual" },
+      { name: "Gemini", symbol: "♊", element: "Air", dates: "May 21 - Jun 20", traits: "Curious, witty, expressive, adaptable" },
+      { name: "Cancer", symbol: "♋", element: "Water", dates: "Jun 21 - Jul 22", traits: "Intuitive, nurturing, empathetic, protective" },
+      { name: "Leo", symbol: "♌", element: "Fire", dates: "Jul 23 - Aug 22", traits: "Radiant, charismatic, theatrical, generous" },
+      { name: "Virgo", symbol: "♍", element: "Earth", dates: "Aug 23 - Sep 22", traits: "Analytical, methodical, helpful, meticulous" },
+      { name: "Libra", symbol: "♎", element: "Air", dates: "Sep 23 - Oct 22", traits: "Harmonious, diplomatic, aesthetic, fair-minded" },
+      { name: "Scorpio", symbol: "♏", element: "Water", dates: "Oct 23 - Nov 21", traits: "Intense, perceptive, transformative, magnetic" },
+      { name: "Sagittarius", symbol: "♐", element: "Fire", dates: "Nov 22 - Dec 21", traits: "Philosophical, adventurous, optimistic, free" },
+      { name: "Capricorn", symbol: "♑", element: "Earth", dates: "Dec 22 - Jan 19", traits: "Strategic, disciplined, patient, resilient" },
+      { name: "Aquarius", symbol: "♒", element: "Air", dates: "Jan 20 - Feb 18", traits: "Visionary, eccentric, humanitarian, inventive" },
+      { name: "Pisces", symbol: "♓", element: "Water", dates: "Feb 19 - Mar 20", traits: "Dreamy, mystical, poetic, boundless compassion" }
     ];
 
+    // Major world cities with lat/long for accurate Ascendant calculation
+    const CITY_COORDS = {
+      "karachi": { lat: 24.8607, lon: 67.0011, tz: 5 },
+      "lahore": { lat: 31.5204, lon: 74.3587, tz: 5 },
+      "islamabad": { lat: 33.6844, lon: 73.0479, tz: 5 },
+      "rawalpindi": { lat: 33.5651, lon: 73.0169, tz: 5 },
+      "faisalabad": { lat: 31.4180, lon: 73.0790, tz: 5 },
+      "peshawar": { lat: 34.0151, lon: 71.5249, tz: 5 },
+      "quetta": { lat: 30.1798, lon: 66.9750, tz: 5 },
+      "multan": { lat: 30.1575, lon: 71.5249, tz: 5 },
+      "delhi": { lat: 28.6139, lon: 77.2090, tz: 5.5 },
+      "mumbai": { lat: 19.0760, lon: 72.8777, tz: 5.5 },
+      "bangalore": { lat: 12.9716, lon: 77.5946, tz: 5.5 },
+      "chennai": { lat: 13.0827, lon: 80.2707, tz: 5.5 },
+      "kolkata": { lat: 22.5726, lon: 88.3639, tz: 5.5 },
+      "hyderabad": { lat: 17.3850, lon: 78.4867, tz: 5.5 },
+      "dhaka": { lat: 23.8103, lon: 90.4125, tz: 6 },
+      "kabul": { lat: 34.5553, lon: 69.2075, tz: 4.5 },
+      "tehran": { lat: 35.6892, lon: 51.3890, tz: 3.5 },
+      "dubai": { lat: 25.2048, lon: 55.2708, tz: 4 },
+      "riyadh": { lat: 24.7136, lon: 46.6753, tz: 3 },
+      "london": { lat: 51.5074, lon: -0.1278, tz: 0 },
+      "paris": { lat: 48.8566, lon: 2.3522, tz: 1 },
+      "berlin": { lat: 52.5200, lon: 13.4050, tz: 1 },
+      "rome": { lat: 41.9028, lon: 12.4964, tz: 1 },
+      "madrid": { lat: 40.4168, lon: -3.7038, tz: 1 },
+      "new york": { lat: 40.7128, lon: -74.0060, tz: -5 },
+      "los angeles": { lat: 34.0522, lon: -118.2437, tz: -8 },
+      "chicago": { lat: 41.8781, lon: -87.6298, tz: -6 },
+      "houston": { lat: 29.7604, lon: -95.3698, tz: -6 },
+      "toronto": { lat: 43.6532, lon: -79.3832, tz: -5 },
+      "vancouver": { lat: 49.2827, lon: -123.1207, tz: -8 },
+      "sydney": { lat: -33.8688, lon: 151.2093, tz: 10 },
+      "melbourne": { lat: -37.8136, lon: 144.9631, tz: 10 },
+      "tokyo": { lat: 35.6762, lon: 139.6503, tz: 9 },
+      "beijing": { lat: 39.9042, lon: 116.4074, tz: 8 },
+      "shanghai": { lat: 31.2304, lon: 121.4737, tz: 8 },
+      "singapore": { lat: 1.3521, lon: 103.8198, tz: 8 },
+      "hong kong": { lat: 22.3193, lon: 114.1694, tz: 8 },
+      "cairo": { lat: 30.0444, lon: 31.2357, tz: 2 },
+      "lagos": { lat: 6.5244, lon: 3.3792, tz: 1 },
+      "johannesburg": { lat: -26.2041, lon: 28.0473, tz: 2 },
+      "nairobi": { lat: -1.2921, lon: 36.8219, tz: 3 },
+      "sao paulo": { lat: -23.5505, lon: -46.6333, tz: -3 },
+      "mexico city": { lat: 19.4326, lon: -99.1332, tz: -6 },
+      "buenos aires": { lat: -34.6037, lon: -58.3816, tz: -3 },
+      "istanbul": { lat: 41.0082, lon: 28.9784, tz: 3 },
+      "moscow": { lat: 55.7558, lon: 37.6173, tz: 3 }
+    };
+
     container.innerHTML = `
-      ${renderToolHeader("Birth Chart Calculator", "Calculate your Sun, Moon, and Rising signs (The Big Three) instantly.", "✨", "Astrology Big Three")}
+      ${renderToolHeader("Birth Chart Calculator", "Calculate your Sun, Moon, and Rising signs with accurate astronomical math.", "✨", "Astrology Big Three")}
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
         <form id="chart-form" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div>
             <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth Date</label>
-            <input type="date" id="birth-date" required class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
+            <input type="date" id="birth-date" required value="1995-06-15" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth Time</label>
-            <input type="time" id="birth-time" value="12:00" required class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth Time (24h)</label>
+            <input type="time" id="birth-time" value="14:30" required class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth City / Country</label>
-            <input type="text" id="birth-place" placeholder="e.g. New York, USA" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none" />
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth City</label>
+            <input type="text" id="birth-place" list="city-list" placeholder="e.g. karachi, london, new york" value="karachi" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none" />
+            <datalist id="city-list">
+              ${Object.keys(CITY_COORDS).map(c => `<option value="${c}">`).join("")}
+            </datalist>
+            <p class="text-[10px] text-slate-500 mt-1.5">Major world cities supported. Unknown cities default to London.</p>
           </div>
           <div class="sm:col-span-3">
             <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition text-xs shadow-lg shadow-emerald-500/20">
@@ -70,7 +124,7 @@
 
         <div id="chart-results" class="mt-8 hidden"></div>
         <p class="text-[11px] text-slate-400 text-center mt-6">
-          * Disclaimer: Simplified astrological calculations for entertainment and educational exploration.
+          * Calculations use real astronomical formulas (Julian Day, Lunar Longitude, Sidereal Time). For entertainment & educational use.
         </p>
       </div>
 
@@ -81,95 +135,227 @@
     const form = container.querySelector("#chart-form");
     const resultsBox = container.querySelector("#chart-results");
 
+    // ============================================================
+    // ASTRONOMICAL CALCULATION HELPERS
+    // ============================================================
+
+    // Julian Day Number from Gregorian calendar
+    function julianDay(year, month, day, hourDecimal) {
+      if (month <= 2) { year -= 1; month += 12; }
+      const A = Math.floor(year / 100);
+      const B = 2 - A + Math.floor(A / 4);
+      return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5 + (hourDecimal / 24);
+    }
+
+    // Sun's ecliptic longitude in degrees (0-360)
+    function sunLongitude(jd) {
+      const n = jd - 2451545.0;
+      const L = 280.460 + 0.9856474 * n;
+      const g = ((357.528 + 0.9856003 * n) % 360) * Math.PI / 180;
+      const lambda = L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g);
+      return ((lambda % 360) + 360) % 360;
+    }
+
+    // Moon's ecliptic longitude in degrees (0-360) — simplified but accurate to ~1°
+    function moonLongitude(jd) {
+      const n = jd - 2451545.0;
+      const L = ((218.316 + 13.176396 * n) % 360 + 360) % 360;
+      const M = ((134.963 + 13.064993 * n) % 360 + 360) % 360;
+      const F = ((93.272 + 13.229350 * n) % 360 + 360) % 360;
+      const lambda = L + 6.289 * Math.sin(M * Math.PI / 180)
+                       - 1.274 * Math.sin((2 * L - M) * Math.PI / 180)
+                       + 0.658 * Math.sin(2 * L * Math.PI / 180);
+      return ((lambda % 360) + 360) % 360;
+    }
+
+    // Ascendant (Rising sign) from Julian Day, latitude, longitude
+    function ascendant(jd, lat, lon) {
+      const T = (jd - 2451545.0) / 36525;
+      // Greenwich Mean Sidereal Time in degrees
+      let gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T;
+      gmst = ((gmst % 360) + 360) % 360;
+      // Local Sidereal Time
+      const lst = ((gmst + lon) % 360 + 360) % 360;
+      const lstRad = lst * Math.PI / 180;
+      const latRad = lat * Math.PI / 180;
+      const oblRad = 23.4393 * Math.PI / 180;
+      // Ascendant formula
+      const y = -Math.cos(lstRad);
+      const x = Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad);
+      let ascDeg = Math.atan2(y, x) * 180 / Math.PI;
+      ascDeg = ((ascDeg % 360) + 360) % 360;
+      return ascDeg;
+    }
+
+    // Convert ecliptic longitude (0-360) to zodiac sign object
+    function degreeToSign(deg) {
+      const idx = Math.floor(deg / 30) % 12;
+      const degInSign = deg % 30;
+      const d = Math.floor(degInSign);
+      const m = Math.floor((degInSign - d) * 60);
+      return {
+        sign: zodiacSigns[idx],
+        degree: d,
+        minute: m,
+        index: idx,
+        formatted: `${zodiacSigns[idx].name} ${d}°${m.toString().padStart(2, "0")}'`
+      };
+    }
+
+    // Look up city coordinates (fuzzy match)
+    function lookupCity(input) {
+      const clean = (input || "").toLowerCase().trim();
+      if (!clean) return { lat: 51.5074, lon: -0.1278, tz: 0, name: "London (default)" };
+      // Exact match first
+      if (CITY_COORDS[clean]) {
+        return { ...CITY_COORDS[clean], name: clean };
+      }
+      // Partial match
+      for (const city of Object.keys(CITY_COORDS)) {
+        if (clean.includes(city) || city.includes(clean)) {
+          return { ...CITY_COORDS[city], name: city };
+        }
+      }
+      // Default
+      return { lat: 51.5074, lon: -0.1278, tz: 0, name: clean + " (approximated as London)" };
+    }
+
+    // ============================================================
+    // FORM SUBMISSION
+    // ============================================================
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const dateVal = container.querySelector("#birth-date").value;
       const timeVal = container.querySelector("#birth-time").value || "12:00";
-      if (!dateVal) return;
+      const cityVal = container.querySelector("#birth-place").value;
 
-      const dateObj = new Date(dateVal + "T" + timeVal);
-      const m = dateObj.getMonth() + 1;
-      const d = dateObj.getDate();
+      if (!dateVal) {
+        showToast("Please enter your birth date.", "error");
+        return;
+      }
 
-      // Sun Sign Calculation
-      let sunIdx = 0;
-      if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) sunIdx = 0;
-      else if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) sunIdx = 1;
-      else if ((m === 5 && d >= 21) || (m === 6 && d <= 20)) sunIdx = 2;
-      else if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) sunIdx = 3;
-      else if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) sunIdx = 4;
-      else if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) sunIdx = 5;
-      else if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) sunIdx = 6;
-      else if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) sunIdx = 7;
-      else if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) sunIdx = 8;
-      else if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) sunIdx = 9;
-      else if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) sunIdx = 10;
-      else sunIdx = 11;
+      const [year, month, day] = dateVal.split("-").map(Number);
+      const [hour, minute] = timeVal.split(":").map(Number);
+      const city = lookupCity(cityVal);
 
-      // Approximate Moon Sign using lunar orbital period (~27.32 days)
-      const epoch = new Date(2000, 0, 6, 18, 14);
-      const diffDays = (dateObj - epoch) / (1000 * 60 * 60 * 24);
-      const moonCycles = (diffDays % 27.32166) / 27.32166;
-      const moonIdx = Math.floor(((moonCycles * 12) + sunIdx) % 12);
+      // Convert local time to UT (Universal Time)
+      const hourDecimalLocal = hour + minute / 60;
+      const hourDecimalUT = hourDecimalLocal - city.tz;
 
-      // Approximate Rising Sign
-      const [h, min] = timeVal.split(":").map(Number);
-      const hoursSinceSunrise = (h + min / 60 - 6 + 24) % 24;
-      const risingShift = Math.floor(hoursSinceSunrise / 2);
-      const risingIdx = (sunIdx + risingShift) % 12;
+      // Julian Day in UT
+      const jd = julianDay(year, month, day, hourDecimalUT);
 
-      const sun = zodiacSigns[sunIdx];
-      const moon = zodiacSigns[moonIdx];
-      const rising = zodiacSigns[risingIdx];
+      // Calculate longitudes
+      const sunLon = sunLongitude(jd);
+      const moonLon = moonLongitude(jd);
+      const ascLon = ascendant(jd, city.lat, city.lon);
 
+      // Convert to sign objects
+      const sun = degreeToSign(sunLon);
+      const moon = degreeToSign(moonLon);
+      const rising = degreeToSign(ascLon);
+
+      // Build results HTML
       resultsBox.classList.remove("hidden");
       resultsBox.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-up">
-          <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
-            <div>
+        <div class="fade-up space-y-6">
+          <div class="text-center">
+            <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Your Astrological Big Three</p>
+            <p class="text-[11px] text-slate-500 mt-1">Born ${day}/${month}/${year} at ${timeVal} in ${city.name.charAt(0).toUpperCase() + city.name.slice(1)}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Sun Sign -->
+            <div class="bg-slate-950 p-6 rounded-2xl border border-amber-500/30">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-400">☀️ Sun Sign</span>
-                <span class="text-2xl">${sun.symbol}</span>
+                <span class="text-3xl">${sun.sign.symbol}</span>
               </div>
-              <h3 class="text-2xl font-black text-white">${sun.name}</h3>
-              <p class="text-xs text-slate-400 mt-1">${sun.dates} • ${sun.element} Element</p>
+              <h3 class="text-2xl font-black text-white">${sun.sign.name}</h3>
+              <p class="text-xs text-amber-400 font-mono mt-1">${sun.formatted}</p>
+              <p class="text-xs text-slate-400 mt-2">${sun.sign.dates} • ${sun.sign.element} Element</p>
               <div class="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                <strong>Core Essence:</strong> ${sun.traits}. Your conscious ego, vitality, and life drive.
+                <strong>Core Essence:</strong> ${sun.sign.traits}
               </div>
             </div>
-          </div>
 
-          <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
-            <div>
+            <!-- Moon Sign -->
+            <div class="bg-slate-950 p-6 rounded-2xl border border-sky-500/30">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-xs font-bold uppercase tracking-wider text-sky-400">🌙 Moon Sign</span>
-                <span class="text-2xl">${moon.symbol}</span>
+                <span class="text-3xl">${moon.sign.symbol}</span>
               </div>
-              <h3 class="text-2xl font-black text-white">${moon.name}</h3>
-              <p class="text-xs text-slate-400 mt-1">${moon.element} Element</p>
+              <h3 class="text-2xl font-black text-white">${moon.sign.name}</h3>
+              <p class="text-xs text-sky-400 font-mono mt-1">${moon.formatted}</p>
+              <p class="text-xs text-slate-400 mt-2">${moon.sign.element} Element</p>
               <div class="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                <strong>Emotional Heart:</strong> ${moon.traits}. Your subconscious instincts, comfort zone, and deep emotions.
+                <strong>Emotional Heart:</strong> ${moon.sign.traits}
+              </div>
+            </div>
+
+            <!-- Rising Sign -->
+            <div class="bg-slate-950 p-6 rounded-2xl border border-emerald-500/30">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">🌅 Rising (Ascendant)</span>
+                <span class="text-3xl">${rising.sign.symbol}</span>
+              </div>
+              <h3 class="text-2xl font-black text-white">${rising.sign.name}</h3>
+              <p class="text-xs text-emerald-400 font-mono mt-1">${rising.formatted}</p>
+              <p class="text-xs text-slate-400 mt-2">${rising.sign.element} Element</p>
+              <div class="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                <strong>Social Mask:</strong> ${rising.sign.traits}
               </div>
             </div>
           </div>
 
-          <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-4">
-                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">🌅 Rising / Ascendant</span>
-                <span class="text-2xl">${rising.symbol}</span>
+          <!-- Astronomical Details -->
+          <div class="bg-slate-950 rounded-xl border border-slate-800 p-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">📐 Astronomical Details</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+              <div>
+                <span class="text-slate-500 block">Julian Day</span>
+                <span class="text-slate-200 font-mono">${jd.toFixed(4)}</span>
               </div>
-              <h3 class="text-2xl font-black text-white">${rising.name}</h3>
-              <p class="text-xs text-slate-400 mt-1">${rising.element} Element</p>
-              <div class="mt-4 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                <strong>Social Mask:</strong> ${rising.traits}. First impressions, appearance, and how the world encounters you.
+              <div>
+                <span class="text-slate-500 block">Sun Longitude</span>
+                <span class="text-slate-200 font-mono">${sunLon.toFixed(2)}°</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Moon Longitude</span>
+                <span class="text-slate-200 font-mono">${moonLon.toFixed(2)}°</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Ascendant</span>
+                <span class="text-slate-200 font-mono">${ascLon.toFixed(2)}°</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Latitude</span>
+                <span class="text-slate-200 font-mono">${city.lat.toFixed(4)}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Longitude</span>
+                <span class="text-slate-200 font-mono">${city.lon.toFixed(4)}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Timezone</span>
+                <span class="text-slate-200 font-mono">UTC${city.tz >= 0 ? "+" : ""}${city.tz}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block">Location</span>
+                <span class="text-slate-200 font-mono">${city.name}</span>
               </div>
             </div>
           </div>
         </div>
       `;
+
+      // Scroll results into view
+      resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
       showToast("Birth chart calculated!");
     });
+
+    // Auto-calculate on page load for demo
+    setTimeout(() => { form.dispatchEvent(new Event("submit")); }, 300);
   }
 
   // -------------------------------------------------------------
@@ -749,7 +935,7 @@
             <div>
               <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">QR Code Content (URL or Text)</label>
               <textarea id="qr-data" rows="3" required placeholder="https://example.com or any text" 
-                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 outline-none">https://alltoolshub.com</textarea>
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 outline-none">https://alltoolshub.qd.je</textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -796,7 +982,7 @@
     const download = container.querySelector("#qr-download");
 
     function render() {
-      const data = encodeURIComponent(container.querySelector("#qr-data").value.trim() || "https://alltoolshub.com");
+      const data = encodeURIComponent(container.querySelector("#qr-data").value.trim() || "https://alltoolshub.qd.je");
       const size = container.querySelector("#qr-size").value;
       const ecc = container.querySelector("#qr-ecc").value;
       const url = `${CONFIG.QR_API}?size=${size}&ecc=${ecc}&data=${data}`;
