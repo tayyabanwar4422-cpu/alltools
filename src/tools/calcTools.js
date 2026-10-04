@@ -7,6 +7,7 @@
  * Tool 10: Word & Character Counter
  * Tool 11: QR Code Generator
  * Tool 12: Password Generator
+ * Tool 13: Numerology Calculator
  */
 (function() {
   "use strict";
@@ -44,7 +45,6 @@
       { name: "Pisces", symbol: "♓", element: "Water", dates: "Feb 19 - Mar 20", traits: "Dreamy, mystical, poetic, boundless compassion" }
     ];
 
-    // Major world cities with lat/long for accurate Ascendant calculation
     const CITY_COORDS = {
       "karachi": { lat: 24.8607, lon: 67.0011, tz: 5 },
       "lahore": { lat: 31.5204, lon: 74.3587, tz: 5 },
@@ -135,11 +135,6 @@
     const form = container.querySelector("#chart-form");
     const resultsBox = container.querySelector("#chart-results");
 
-    // ============================================================
-    // ASTRONOMICAL CALCULATION HELPERS
-    // ============================================================
-
-    // Julian Day Number from Gregorian calendar
     function julianDay(year, month, day, hourDecimal) {
       if (month <= 2) { year -= 1; month += 12; }
       const A = Math.floor(year / 100);
@@ -147,7 +142,6 @@
       return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + B - 1524.5 + (hourDecimal / 24);
     }
 
-    // Sun's ecliptic longitude in degrees (0-360)
     function sunLongitude(jd) {
       const n = jd - 2451545.0;
       const L = 280.460 + 0.9856474 * n;
@@ -156,30 +150,24 @@
       return ((lambda % 360) + 360) % 360;
     }
 
-    // Moon's ecliptic longitude in degrees (0-360) — simplified but accurate to ~1°
     function moonLongitude(jd) {
       const n = jd - 2451545.0;
       const L = ((218.316 + 13.176396 * n) % 360 + 360) % 360;
       const M = ((134.963 + 13.064993 * n) % 360 + 360) % 360;
-      const F = ((93.272 + 13.229350 * n) % 360 + 360) % 360;
       const lambda = L + 6.289 * Math.sin(M * Math.PI / 180)
                        - 1.274 * Math.sin((2 * L - M) * Math.PI / 180)
                        + 0.658 * Math.sin(2 * L * Math.PI / 180);
       return ((lambda % 360) + 360) % 360;
     }
 
-    // Ascendant (Rising sign) from Julian Day, latitude, longitude
     function ascendant(jd, lat, lon) {
       const T = (jd - 2451545.0) / 36525;
-      // Greenwich Mean Sidereal Time in degrees
       let gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T;
       gmst = ((gmst % 360) + 360) % 360;
-      // Local Sidereal Time
       const lst = ((gmst + lon) % 360 + 360) % 360;
       const lstRad = lst * Math.PI / 180;
       const latRad = lat * Math.PI / 180;
       const oblRad = 23.4393 * Math.PI / 180;
-      // Ascendant formula
       const y = -Math.cos(lstRad);
       const x = Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad);
       let ascDeg = Math.atan2(y, x) * 180 / Math.PI;
@@ -187,7 +175,6 @@
       return ascDeg;
     }
 
-    // Convert ecliptic longitude (0-360) to zodiac sign object
     function degreeToSign(deg) {
       const idx = Math.floor(deg / 30) % 12;
       const degInSign = deg % 30;
@@ -202,27 +189,20 @@
       };
     }
 
-    // Look up city coordinates (fuzzy match)
     function lookupCity(input) {
       const clean = (input || "").toLowerCase().trim();
       if (!clean) return { lat: 51.5074, lon: -0.1278, tz: 0, name: "London (default)" };
-      // Exact match first
       if (CITY_COORDS[clean]) {
         return { ...CITY_COORDS[clean], name: clean };
       }
-      // Partial match
       for (const city of Object.keys(CITY_COORDS)) {
         if (clean.includes(city) || city.includes(clean)) {
           return { ...CITY_COORDS[city], name: city };
         }
       }
-      // Default
       return { lat: 51.5074, lon: -0.1278, tz: 0, name: clean + " (approximated as London)" };
     }
 
-    // ============================================================
-    // FORM SUBMISSION
-    // ============================================================
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const dateVal = container.querySelector("#birth-date").value;
@@ -238,24 +218,18 @@
       const [hour, minute] = timeVal.split(":").map(Number);
       const city = lookupCity(cityVal);
 
-      // Convert local time to UT (Universal Time)
       const hourDecimalLocal = hour + minute / 60;
       const hourDecimalUT = hourDecimalLocal - city.tz;
-
-      // Julian Day in UT
       const jd = julianDay(year, month, day, hourDecimalUT);
 
-      // Calculate longitudes
       const sunLon = sunLongitude(jd);
       const moonLon = moonLongitude(jd);
       const ascLon = ascendant(jd, city.lat, city.lon);
 
-      // Convert to sign objects
       const sun = degreeToSign(sunLon);
       const moon = degreeToSign(moonLon);
       const rising = degreeToSign(ascLon);
 
-      // Build results HTML
       resultsBox.classList.remove("hidden");
       resultsBox.innerHTML = `
         <div class="fade-up space-y-6">
@@ -265,7 +239,6 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Sun Sign -->
             <div class="bg-slate-950 p-6 rounded-2xl border border-amber-500/30">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-xs font-bold uppercase tracking-wider text-amber-400">☀️ Sun Sign</span>
@@ -279,7 +252,6 @@
               </div>
             </div>
 
-            <!-- Moon Sign -->
             <div class="bg-slate-950 p-6 rounded-2xl border border-sky-500/30">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-xs font-bold uppercase tracking-wider text-sky-400">🌙 Moon Sign</span>
@@ -293,7 +265,6 @@
               </div>
             </div>
 
-            <!-- Rising Sign -->
             <div class="bg-slate-950 p-6 rounded-2xl border border-emerald-500/30">
               <div class="flex items-center justify-between mb-4">
                 <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">🌅 Rising (Ascendant)</span>
@@ -308,7 +279,6 @@
             </div>
           </div>
 
-          <!-- Astronomical Details -->
           <div class="bg-slate-950 rounded-xl border border-slate-800 p-4">
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">📐 Astronomical Details</h4>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
@@ -349,17 +319,15 @@
         </div>
       `;
 
-      // Scroll results into view
       resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
       showToast("Birth chart calculated!");
     });
 
-    // Auto-calculate on page load for demo
     setTimeout(() => { form.dispatchEvent(new Event("submit")); }, 300);
   }
 
   // -------------------------------------------------------------
-  // TOOL 7: Age Calculator & Birthday Countdown (Live Ticking)
+  // TOOL 7: Age Calculator & Birthday Countdown
   // -------------------------------------------------------------
   function renderAgeCalculator(container) {
     updateSEO({
@@ -1150,8 +1118,178 @@
     generate();
   }
 
+  // -------------------------------------------------------------
+  // TOOL 13: Numerology Calculator
+  // -------------------------------------------------------------
+  function renderNumerology(container) {
+    updateSEO({
+      title: "Free Numerology Calculator - Life Path, Expression & Soul Urge Numbers",
+      description: "Calculate your numerology core numbers: Life Path, Expression, Soul Urge, Personality, Birthday, and Personal Year. Free, accurate Pythagorean numerology.",
+      path: "/tools/numerology-calculator",
+      appName: "Numerology Calculator",
+      faqs: [
+        { q: "What is a Life Path number?", a: "Your Life Path number is derived from your full birth date and represents the core theme of your life — your purpose, challenges, and greatest potential." },
+        { q: "What are master numbers?", a: "Master numbers are 11, 22, and 33. They are not reduced further because they carry higher spiritual significance and greater potential (and greater challenge)." },
+        { q: "How is numerology calculated?", a: "We use the standard Pythagorean system where A=1, B=2, ... I=9, J=1, and so on. Letters are summed and reduced to a single digit unless they form a master number." }
+      ],
+      breadcrumbs: [{ name: "Home", path: "/" }, { name: "Numerology Calculator", path: "/tools/numerology-calculator" }]
+    });
+
+    const LETTER_VALUES = {
+      A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
+      J:1, K:2, L:3, M:4, N:5, O:6, P:7, Q:8, R:9,
+      S:1, T:2, U:3, V:4, W:5, X:6, Y:7, Z:8
+    };
+    const VOWELS = ["A","E","I","O","U"];
+
+    const MEANINGS = {
+      1: { title: "The Leader", traits: "Independent, pioneering, ambitious, original. You are here to lead, innovate, and stand on your own." },
+      2: { title: "The Diplomat", traits: "Cooperative, sensitive, harmonious, intuitive. You are here to balance, partner, and heal relationships." },
+      3: { title: "The Communicator", traits: "Expressive, creative, joyful, social. You are here to inspire through art, words, and connection." },
+      4: { title: "The Builder", traits: "Disciplined, practical, dependable, methodical. You are here to build lasting foundations and systems." },
+      5: { title: "The Adventurer", traits: "Free-spirited, curious, versatile, dynamic. You are here to experience freedom and embrace change." },
+      6: { title: "The Nurturer", traits: "Caring, responsible, protective, harmonious. You are here to serve family, community, and beauty." },
+      7: { title: "The Seeker", traits: "Analytical, spiritual, introspective, wise. You are here to seek truth, knowledge, and inner wisdom." },
+      8: { title: "The Achiever", traits: "Ambitious, powerful, authoritative, business-minded. You are here to master the material world and lead." },
+      9: { title: "The Humanitarian", traits: "Compassionate, selfless, idealistic, generous. You are here to serve humanity and let go of the ego." },
+      11: { title: "The Intuitive Master", traits: "Highly intuitive, visionary, inspiring, spiritually attuned. A master number carrying amplified spiritual potential." },
+      22: { title: "The Master Builder", traits: "Visionary realist, capable of manifesting big dreams into concrete reality. The most powerful master number for worldly achievement." },
+      33: { title: "The Master Teacher", traits: "Compassionate healer, spiritual teacher, selfless servant. Rare and highly evolved; here to uplift humanity through love." }
+    };
+
+    function reduce(n, keepMaster = true) {
+      while (n > 9) {
+        if (keepMaster && (n === 11 || n === 22 || n === 33)) return n;
+        n = String(n).split("").reduce((sum, d) => sum + parseInt(d), 0);
+      }
+      return n;
+    }
+
+    function letterSum(str) {
+      return str.toUpperCase().replace(/[^A-Z]/g, "").split("")
+        .reduce((sum, ch) => sum + (LETTER_VALUES[ch] || 0), 0);
+    }
+
+    function calculateNumerology(fullName, birthDate) {
+      const [year, month, day] = birthDate.split("-").map(Number);
+
+      const dateStr = `${day}${month}${year}`;
+      const dateSum = dateStr.split("").reduce((s, d) => s + parseInt(d), 0);
+      const lifePath = reduce(dateSum);
+
+      const birthday = reduce(day);
+
+      const expression = reduce(letterSum(fullName));
+
+      const vowelsOnly = fullName.toUpperCase().split("").filter(c => VOWELS.includes(c)).join("");
+      const soulUrge = reduce(letterSum(vowelsOnly));
+
+      const consonantsOnly = fullName.toUpperCase().replace(/[^A-Z]/g, "").split("").filter(c => !VOWELS.includes(c)).join("");
+      const personality = reduce(letterSum(consonantsOnly));
+
+      const currentYear = new Date().getFullYear();
+      const pySum = String(currentYear).split("").reduce((s, d) => s + parseInt(d), 0)
+                  + reduce(day, false)
+                  + reduce(month, false);
+      const personalYear = reduce(pySum);
+
+      return { lifePath, birthday, expression, soulUrge, personality, personalYear };
+    }
+
+    container.innerHTML = `
+      ${renderToolHeader("Numerology Calculator", "Discover your Life Path, Expression, Soul Urge, Personality & Personal Year numbers.", "🔢", "Pythagorean Numerology")}
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+        <form id="num-form" class="space-y-4 mb-6">
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Full Birth Name</label>
+            <input type="text" id="num-name" required placeholder="e.g. Tayyab Ali Khan" value="Tayyab Ali Khan"
+              class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
+            <p class="text-[10px] text-slate-500 mt-1.5">Use your full birth name as it appears on your birth certificate for accuracy.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Birth Date</label>
+            <input type="date" id="num-date" required value="1995-06-15"
+              class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-slate-100 outline-none" />
+          </div>
+          <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition text-xs shadow-lg shadow-emerald-500/20">
+            ⚡ Calculate My Numerology Numbers
+          </button>
+        </form>
+
+        <div id="num-results" class="mt-8 hidden"></div>
+        <p class="text-[11px] text-slate-400 text-center mt-6">
+          * Numerology is a symbolic study for entertainment and self-reflection.
+        </p>
+      </div>
+
+      ${renderAdSlot("Below Tool Card")}
+      ${renderRelatedTools("numerology-calculator")}
+    `;
+
+    const form = container.querySelector("#num-form");
+    const resultsBox = container.querySelector("#num-results");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = container.querySelector("#num-name").value.trim();
+      const date = container.querySelector("#num-date").value;
+
+      if (!name || !date) {
+        showToast("Please enter both your name and birth date.", "error");
+        return;
+      }
+
+      const nums = calculateNumerology(name, date);
+
+      function numberCard(label, value, icon, color) {
+        const meaning = MEANINGS[value] || MEANINGS[reduce(value)];
+        const isMaster = value === 11 || value === 22 || value === 33;
+        return `
+          <div class="bg-slate-950 p-5 rounded-xl border border-${color}-500/30">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-${color}-400">${icon} ${label}</span>
+              <span class="text-3xl font-black text-white">${value}${isMaster ? '<span class="text-[10px] text-amber-400 ml-1 align-super">MASTER</span>' : ''}</span>
+            </div>
+            <p class="text-sm font-bold text-white mb-1">${meaning.title}</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">${meaning.traits}</p>
+          </div>
+        `;
+      }
+
+      resultsBox.classList.remove("hidden");
+      resultsBox.innerHTML = `
+        <div class="fade-up space-y-6">
+          <div class="text-center">
+            <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Your Numerology Profile</p>
+            <p class="text-[11px] text-slate-500 mt-1">${name} • Born ${date}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${numberCard("Life Path", nums.lifePath, "🛤️", "emerald")}
+            ${numberCard("Expression / Destiny", nums.expression, "🎯", "purple")}
+            ${numberCard("Soul Urge", nums.soulUrge, "❤️", "rose")}
+            ${numberCard("Personality", nums.personality, "🎭", "amber")}
+            ${numberCard("Birthday", nums.birthday, "🎂", "sky")}
+            ${numberCard("Personal Year (current)", nums.personalYear, "📅", "cyan")}
+          </div>
+
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400 leading-relaxed">
+            <strong class="text-slate-200">How to read your chart:</strong> Your <strong class="text-emerald-400">Life Path</strong> is your life's main journey. <strong class="text-purple-400">Expression</strong> shows your natural talents. <strong class="text-rose-400">Soul Urge</strong> reveals what your heart truly desires. <strong class="text-amber-400">Personality</strong> is how others first see you. <strong class="text-sky-400">Birthday</strong> shows special gifts. <strong class="text-cyan-400">Personal Year</strong> describes the energy of your current year (1–9 cycle).
+          </div>
+        </div>
+      `;
+
+      resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      showToast("Numerology calculated!");
+    });
+
+    setTimeout(() => { form.dispatchEvent(new Event("submit")); }, 300);
+  }
+
   // Register tools to APP namespace
   window.APP.renderBirthChart = renderBirthChart;
+  window.APP.renderNumerology = renderNumerology;
   window.APP.renderAgeCalculator = renderAgeCalculator;
   window.APP.renderPaintCalculator = renderPaintCalculator;
   window.APP.renderTitleGenerator = renderTitleGenerator;
