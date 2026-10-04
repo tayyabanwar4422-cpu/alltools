@@ -1,19 +1,16 @@
 /**
  * AllToolsHub - Router & Informational Pages
- * Home Page (Hero + 11-Tool Grid + SEO Copy + Ad Slots)
+ * Home Page (Hero + 12-Tool Grid + SEO Copy + Ad Slots)
  * About Page, Privacy Policy, Terms of Service, Contact
  */
 (function() {
   "use strict";
-  const { CONFIG, updateSEO, renderAdSlot } = window.APP;
+  const { CONFIG, updateSEO } = window.APP;
 
-  // -------------------------------------------------------------
-  // HOME PAGE
-  // -------------------------------------------------------------
   function renderHome(container) {
     updateSEO({
-      title: "AllToolsHub - 11 Free Fast Online Web Utilities (No Installs, No Cost)",
-      description: "Access 11 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Paint Calculator & Password Generator.",
+      title: "AllToolsHub - 12 Free Fast Online Web Utilities (No Installs, No Cost)",
+      description: "Access 12 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Numerology, Paint Calculator & Password Generator.",
       path: "/",
       appName: "AllToolsHub Suite",
       breadcrumbs: [{ name: "Home", path: "/" }]
@@ -24,7 +21,8 @@
       { key: "image-converter", name: "Image Converter & BG Remover", icon: "🖼️", tag: "PNG, JPG, WebP + Cutout", desc: "Batch convert image formats, scale pixel dimensions, and remove backgrounds with client-side AI masking.", link: "#/tools/image-converter" },
       { key: "image-to-pdf", name: "Image to PDF Converter", icon: "📄", tag: "Multi-Image Compiler", desc: "Merge multiple JPG, PNG, and WebP pictures into a clean printable PDF with custom page geometry.", link: "#/tools/image-to-pdf" },
       { key: "wechat-downloader", name: "WeChat Video Downloader", icon: "💬", tag: "Public Article Media", desc: "Inspect and extract public embedded video media from WeChat official account articles.", link: "#/tools/wechat-downloader" },
-      { key: "birth-chart-calculator", name: "Birth Chart Calculator", icon: "✨", tag: "Sun, Moon, Rising Signs", desc: "Calculate your astrological Big Three with planetary approximations, date cutoffs, and deep archetypes.", link: "#/tools/birth-chart-calculator" },
+      { key: "birth-chart-calculator", name: "Birth Chart Calculator", icon: "✨", tag: "Sun, Moon, Rising Signs", desc: "Calculate your astrological Big Three with accurate astronomical math, real lat/long, and timezone support.", link: "#/tools/birth-chart-calculator" },
+      { key: "numerology-calculator", name: "Numerology Calculator", icon: "🔢", tag: "Life Path & Destiny", desc: "Discover your Life Path, Expression, Soul Urge, Personality, Birthday and Personal Year numbers.", link: "#/tools/numerology-calculator" },
       { key: "age-calculator", name: "Age & Birthday Countdown", icon: "⏳", tag: "Live Ticking Seconds", desc: "Chronological age breakdown, total days, hours, live seconds lived, and next birthday countdown timer.", link: "#/tools/age-calculator" },
       { key: "paint-calculator", name: "Room Paint Calculator", icon: "🎨", tag: "Litres & Budget Estimator", desc: "Determine room surface areas, door/window deductions, coats required, and total renovation paint cost.", link: "#/tools/paint-calculator" },
       { key: "title-generator", name: "Viral Title Generator", icon: "💡", tag: "High-CTR Headlines", desc: "Generate 6 compelling, click-worthy titles for YouTube videos, blog posts, how-to guides, and tweets.", link: "#/tools/title-generator" },
@@ -35,10 +33,9 @@
 
     container.innerHTML = `
       <div class="space-y-12">
-        <!-- Hero Section -->
         <section class="text-center py-8 sm:py-16 max-w-4xl mx-auto space-y-5 fade-up">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span>✨</span> 11 Production-Grade Utilities • 100% Free & Client-Side
+            <span>✨</span> 12 Production-Grade Utilities • 100% Free & Client-Side
           </div>
           <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
             High-Speed Web Tools, <br class="hidden sm:inline" />
@@ -57,14 +54,13 @@
           </div>
         </section>
 
-        <!-- 3-Column Responsive Tool Grid -->
         <section aria-label="Available Utilities Grid" class="space-y-6">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
             <div>
               <h2 class="text-xl sm:text-2xl font-extrabold text-white">All Utilities</h2>
               <p class="text-xs text-slate-400 mt-0.5">Select any tool below to launch instantly in your browser</p>
             </div>
-            <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">11 Ready</span>
+            <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">12 Ready</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -87,7 +83,6 @@
           </div>
         </section>
 
-        <!-- Comprehensive SEO Copy: Why Use AllToolsHub? -->
         <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 space-y-6 text-slate-300">
           <div class="space-y-2">
             <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Why Choose Us</span>
@@ -127,9 +122,6 @@
     `;
   }
 
-  // -------------------------------------------------------------
-  // ABOUT PAGE
-  // -------------------------------------------------------------
   function renderAbout(container) {
     updateSEO({
       title: "About AllToolsHub - Free, Fast, Private Web Utilities",
@@ -152,18 +144,14 @@
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>🎯</span> Our Mission
-          </h2>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2"><span>🎯</span> Our Mission</h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
             The modern web is filled with utility websites packed with misleading download buttons, mandatory paid subscriptions for simple file conversions, and opaque server storage policies. AllToolsHub was created to provide a refreshingly transparent alternative: free, fast, private, and beautifully designed single-page utilities that work instantly without creating an account.
           </p>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>💼</span> How We Make Money
-          </h2>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2"><span>💼</span> How We Make Money</h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
             AllToolsHub is supported entirely through digital display advertising partnerships, primarily via <strong>Adsterra</strong>. This advertising revenue pays for our domain hosting, high-performance CDN distribution, and continuous software development.
           </p>
@@ -173,18 +161,14 @@
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>🛡️</span> Privacy-First Architecture
-          </h2>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2"><span>🛡️</span> Privacy-First Architecture</h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
             Because our utilities execute inside the client's web browser using native Web APIs (such as Canvas 2D, Web Cryptography, and Blob streaming), your sensitive images, documents, passwords, and calculation variables never touch our servers. When you close the browser tab, your temporary session data is instantly erased from memory.
           </p>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>📬</span> Contact Us
-          </h2>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2"><span>📬</span> Contact Us</h2>
           <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
             Have a suggestion for a new utility, want to report a broken stream extractor, or need to discuss advertising partnerships? We would love to hear from you.
           </p>
@@ -197,9 +181,6 @@
     `;
   }
 
-  // -------------------------------------------------------------
-  // PRIVACY POLICY PAGE
-  // -------------------------------------------------------------
   function renderPrivacy(container) {
     updateSEO({
       title: "Privacy Policy - Client-Side Data & Adsterra Disclosure",
@@ -238,9 +219,6 @@
     `;
   }
 
-  // -------------------------------------------------------------
-  // TERMS OF SERVICE PAGE
-  // -------------------------------------------------------------
   function renderTerms(container) {
     updateSEO({
       title: "Terms of Service - Fair Use & Disclaimers",
@@ -267,16 +245,13 @@
 
           <h2 class="text-base font-bold text-white pt-2">3. Disclaimer of Warranties</h2>
           <p class="text-slate-400">
-            All services are provided on an "as is" and "as available" basis without warranties of any kind. Calculations (such as paint estimates and birth chart interpretations) are estimates intended for educational guidance and entertainment only.
+            All services are provided on an "as is" and "as available" basis without warranties of any kind. Calculations (such as paint estimates, birth chart interpretations, and numerology readings) are estimates intended for educational guidance and entertainment only.
           </p>
         </div>
       </div>
     `;
   }
 
-  // -------------------------------------------------------------
-  // CONTACT PAGE
-  // -------------------------------------------------------------
   function renderContact(container) {
     updateSEO({
       title: "Contact Us - Support & Business Inquiries",
@@ -321,9 +296,6 @@
     });
   }
 
-  // -------------------------------------------------------------
-  // HASH ROUTER DISPATCHER
-  // -------------------------------------------------------------
   function handleRoute() {
     const rawHash = window.location.hash || "#/";
     const path = rawHash.replace(/^#/, "") || "/";
@@ -333,62 +305,27 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     switch (path) {
-      case "/":
-        renderHome(app);
-        break;
-      case "/about":
-        renderAbout(app);
-        break;
-      case "/privacy":
-        renderPrivacy(app);
-        break;
-      case "/terms":
-        renderTerms(app);
-        break;
-      case "/contact":
-        renderContact(app);
-        break;
-      // Tools (YouTube removed)
-      case "/tools/video-downloader":
-        window.APP.renderVideoDownloader(app);
-        break;
-      case "/tools/image-converter":
-        window.APP.renderImageConverter(app);
-        break;
-      case "/tools/image-to-pdf":
-        window.APP.renderImageToPdf(app);
-        break;
-      case "/tools/wechat-downloader":
-        window.APP.renderWechatDownloader(app);
-        break;
-      case "/tools/birth-chart-calculator":
-        window.APP.renderBirthChart(app);
-        break;
-      case "/tools/age-calculator":
-        window.APP.renderAgeCalculator(app);
-        break;
-      case "/tools/paint-calculator":
-        window.APP.renderPaintCalculator(app);
-        break;
-      case "/tools/title-generator":
-        window.APP.renderTitleGenerator(app);
-        break;
-      case "/tools/word-counter":
-        window.APP.renderWordCounter(app);
-        break;
-      case "/tools/qr-code-generator":
-        window.APP.renderQrGenerator(app);
-        break;
-      case "/tools/password-generator":
-        window.APP.renderPasswordGenerator(app);
-        break;
-      default:
-        renderHome(app);
-        break;
+      case "/": renderHome(app); break;
+      case "/about": renderAbout(app); break;
+      case "/privacy": renderPrivacy(app); break;
+      case "/terms": renderTerms(app); break;
+      case "/contact": renderContact(app); break;
+      case "/tools/video-downloader": window.APP.renderVideoDownloader(app); break;
+      case "/tools/image-converter": window.APP.renderImageConverter(app); break;
+      case "/tools/image-to-pdf": window.APP.renderImageToPdf(app); break;
+      case "/tools/wechat-downloader": window.APP.renderWechatDownloader(app); break;
+      case "/tools/birth-chart-calculator": window.APP.renderBirthChart(app); break;
+      case "/tools/numerology-calculator": window.APP.renderNumerology(app); break;
+      case "/tools/age-calculator": window.APP.renderAgeCalculator(app); break;
+      case "/tools/paint-calculator": window.APP.renderPaintCalculator(app); break;
+      case "/tools/title-generator": window.APP.renderTitleGenerator(app); break;
+      case "/tools/word-counter": window.APP.renderWordCounter(app); break;
+      case "/tools/qr-code-generator": window.APP.renderQrGenerator(app); break;
+      case "/tools/password-generator": window.APP.renderPasswordGenerator(app); break;
+      default: renderHome(app); break;
     }
   }
 
-  // Mobile menu setup
   function initMobileMenu() {
     const btn = document.getElementById("mobile-menu-btn");
     const menu = document.getElementById("mobile-menu");
@@ -403,7 +340,6 @@
     });
   }
 
-  // Initialize
   window.addEventListener("hashchange", handleRoute);
   window.addEventListener("DOMContentLoaded", () => {
     initMobileMenu();
