@@ -6,7 +6,7 @@
  * Tool 4: Image to PDF Converter
  * Tool 5: WeChat Video Downloader
  *
- * Uses multi-engine API routing with automated failovers for social platforms.
+ * Multi-engine routing with automated failovers for TikTok, Instagram, YouTube, and generic video links.
  */
 (function() {
   "use strict";
@@ -18,7 +18,8 @@
   const YOZORA_BASE = "https://tools-murex-phi.vercel.app";
   const COBALT_API_NODES = [
     "https://api.cobalt.tools/api/json",
-    "https://co.wuk.sh/api/json"
+    "https://co.wuk.sh/api/json",
+    "https://cobalt-api.kwi.li/api/json"
   ];
 
   // Detect platform by URL pattern
@@ -42,8 +43,23 @@
   async function fetchMediaStream(videoUrl, options = {}) {
     const isAudio = options.isAudio || false;
     const quality = options.quality || "720";
+    const cleanUrl = videoUrl.split('?')[0]; // Strip tracking query parameters like ?stkn=...
 
-    // Attempt 1: Cobalt API Cluster
+    // 1. Instagram Dedicated API Resolver
+    if (videoUrl.includes("instagram.com")) {
+      try {
+        const igRes = await fetchWithTimeout(`https://api.v2.emily.is/api/instagram?url=${encodeURIComponent(cleanUrl)}`, {}, 6000);
+        if (igRes.ok) {
+          const igData = await igRes.json();
+          const stream = igData.url || (igData.data && igData.data[0] ? igData.data[0].url : null);
+          if (stream) return { url: stream, title: "Instagram Video", engine: "IG-Direct" };
+        }
+      } catch (e) {
+        console.warn("IG primary node failed, switching to cluster:", e);
+      }
+    }
+
+    // 2. Cobalt API Cluster
     for (const nodeUrl of COBALT_API_NODES) {
       try {
         const response = await fetchWithTimeout(nodeUrl, {
@@ -62,11 +78,12 @@
 
         if (response.ok) {
           const data = await response.json();
-          if (data && (data.url || data.picker)) {
+          const targetUrl = data.url || (data.picker && data.picker[0] ? data.picker[0].url : null);
+          if (targetUrl) {
             return {
-              url: data.url || (data.picker && data.picker[0] ? data.picker[0].url : null),
+              url: targetUrl,
               title: data.filename || "Downloaded Media",
-              engine: "Cobalt"
+              engine: "Cobalt-Cluster"
             };
           }
         }
@@ -75,7 +92,7 @@
       }
     }
 
-    // Attempt 2: Yozora Vercel Endpoint
+    // 3. Serverless Yozora Relay
     try {
       const yozoraUrl = `${YOZORA_BASE}/api/download?url=${encodeURIComponent(videoUrl)}${isAudio ? '&audio=true' : ''}`;
       const res = await fetchWithTimeout(yozoraUrl, {}, 6000);
@@ -117,7 +134,7 @@
           <div>
             <label for="video-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Paste Video URL</label>
             <div class="relative">
-              <input type="url" id="video-url" required placeholder="https://www.tiktok.com/@user/video/... or https://youtu.be/..." 
+              <input type="url" id="video-url" required placeholder="https://www.instagram.com/reel/... or https://www.tiktok.com/@user/video/..." 
                 class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 transition-colors pr-24 outline-none" />
               <button type="button" id="paste-btn" class="absolute right-2 top-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">
                 Paste
@@ -144,7 +161,7 @@
       </section>
 
       ${renderFaqs([
-        { q: "Can I download videos on an iPhone or Android phone?", a: "Yes. Simply open AllToolsHub in Safari, Chrome, or any mobile browser, paste your link, tap download, and save the file." },
+        { q: "Can I download videos on an iPhone or Android phone?", a: "Yes. Open AllToolsHub in Safari or Chrome, paste your link, and tap download." },
         { q: "Is downloading videos legal?", a: "Downloading public videos for offline personal use and fair use analysis is standard practice." }
       ])}
 
