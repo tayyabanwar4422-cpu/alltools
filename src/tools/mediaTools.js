@@ -35,109 +35,14 @@
   }
 
   // ============================================================
-  // YOZORA FETCH — Tries POST + JSON body first (Yozora's expected format),
-  // then falls back to other combinations.
+  // YOZORA FETCH — Returns the direct stream URL.
+  // Yozora streams video via ffmpeg — we point the <video> tag
+  // directly at the API. Media elements don't need CORS.
   // ============================================================
   async function fetchViaYozora(videoUrl) {
-    const attempts = [
-      // POST with JSON body (most common pattern for downloader APIs)
-      { path: "/api/download", method: "POST", param: "url" },
-      { path: "/api/download", method: "POST", param: "link" },
-      { path: "/api/download", method: "POST", param: "videoUrl" },
-      { path: "/api", method: "POST", param: "url" },
-      { path: "/api", method: "POST", param: "link" },
-      // GET fallbacks
-      { path: "/api/download", method: "GET", param: "url" },
-      { path: "/api/download", method: "GET", param: "link" },
-      { path: "/api", method: "GET", param: "url" }
-    ];
-
-    let lastError = null;
-
-    for (const attempt of attempts) {
-      const fullUrl = YOZORA_BASE + attempt.path;
-      try {
-        let res;
-
-        if (attempt.method === "POST") {
-          const body = {};
-          body[attempt.param] = videoUrl;
-          console.log(`Trying Yozora POST ${attempt.path} with {"${attempt.param}": "..."}`);
-
-          res = await fetchWithTimeout(fullUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify(body)
-          }, 25000);
-        } else {
-          const query = `${attempt.path}?${attempt.param}=${encodeURIComponent(videoUrl)}`;
-          console.log(`Trying Yozora GET ${query}`);
-
-          res = await fetchWithTimeout(YOZORA_BASE + query, {
-            method: "GET",
-            headers: { "Accept": "application/json" }
-          }, 25000);
-        }
-
-        console.log(`→ Response: ${res.status} ${res.statusText}`);
-
-        if (!res.ok) {
-          // Try to read the error body for diagnostics
-          let errBody = "";
-          try { errBody = await res.text(); } catch {}
-          lastError = new Error(`${attempt.method} ${attempt.path} → ${res.status}: ${errBody.slice(0, 200)}`);
-          console.warn("Yozora attempt failed:", lastError.message);
-          continue;
-        }
-
-        // Parse response
-        const contentType = res.headers.get("content-type") || "";
-        let data;
-        if (contentType.includes("application/json")) {
-          data = await res.json();
-        } else {
-          const text = await res.text();
-          if (text.trim().startsWith("http")) {
-            console.log("✅ Yozora success (plain URL):", attempt);
-            return { url: text.trim(), platform: "Video" };
-          }
-          try { data = JSON.parse(text); } catch { data = null; }
-        }
-
-        if (!data) {
-          lastError = new Error(`Empty response from ${attempt.path}`);
-          continue;
-        }
-
-        console.log("Yozora response:", data);
-
-        // Handle all response shapes
-        if (data.url) { console.log("✅ Yozora success (data.url):", attempt); return { url: data.url, platform: "Video" }; }
-        if (data.data?.url) { console.log("✅ Yozora success (data.data.url):", attempt); return { url: data.data.url, platform: "Video" }; }
-        if (data.data?.play) { console.log("✅ Yozora success (data.data.play):", attempt); return { url: data.data.play, platform: "Video" }; }
-        if (data.video_url) { console.log("✅ Yozora success (data.video_url):", attempt); return { url: data.video_url, platform: "Video" }; }
-        if (data.download_url) { console.log("✅ Yozora success (data.download_url):", attempt); return { url: data.download_url, platform: "Video" }; }
-        if (data.link) { console.log("✅ Yozora success (data.link):", attempt); return { url: data.link, platform: "Video" }; }
-        if (Array.isArray(data.formats) && data.formats.length > 0) {
-          const best = data.formats.filter(f => f.url).sort((a, b) => (b.height || 0) - (a.height || 0))[0];
-          if (best?.url) { console.log("✅ Yozora success (formats[0]):", attempt); return { url: best.url, platform: "Video" }; }
-        }
-        if (Array.isArray(data) && data[0]?.url) {
-          console.log("✅ Yozora success (array[0]):", attempt);
-          return { url: data[0].url, platform: "Video" };
-        }
-
-        lastError = new Error(`Unrecognized response shape from ${attempt.path}`);
-      } catch (err) {
-        lastError = err;
-        console.warn(`Yozora ${attempt.method} ${attempt.path} exception:`, err.message);
-      }
-    }
-
-    throw lastError || new Error("All Yozora attempts failed");
+    const streamUrl = `${YOZORA_BASE}/api/download?url=${encodeURIComponent(videoUrl)}`;
+    console.log("Using Yozora direct stream URL:", streamUrl);
+    return { url: streamUrl, platform: "Video", isStream: true };
   }
 
   // ============================================================
