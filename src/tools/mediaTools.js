@@ -14,7 +14,7 @@
   "use strict";
   const { CONFIG, fetchWithTimeout, showToast, updateSEO, renderAdSlot, renderToolHeader, renderFaqs, renderRelatedTools } = window.APP;
 
-  const YOZORA_BASE = "https://vercel.app";
+  const YOZORA_BASE = "https://tools-murex-phi.vercel.app";
 
   // Helper to identify social platforms
   function detectPlatform(url) {
@@ -144,7 +144,6 @@
         </div>
       `;
 
-      // ---- INSTAGRAM BLOCK BYPASS TRIGGER (Fixed Engine) ----
       if (url.toLowerCase().includes("instagram.com")) {
         const endpoints = ["https://cobalt.tools", "https://kwiatekmiki.com"];
         for (const api of endpoints) {
@@ -157,3 +156,5 @@
             const data = await res.json();
             if (data && data.url) {
               resultBox.innerHTML = `
+                <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
+                  <div>
