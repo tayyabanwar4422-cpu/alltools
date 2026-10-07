@@ -1,6 +1,6 @@
 /**
  * AllToolsHub - Media & Graphics Tools
- * Tool 1: All Video Downloader (TikTok, X, Reddit)
+ * Tool 1: TikTok Video Downloader
  * Tool 2: Image Converter + Resizer + BG Remover
  * Tool 3: Image to PDF Converter
  * Tool 4: WeChat Video Downloader
@@ -9,142 +9,33 @@
   "use strict";
   const { CONFIG, fetchWithTimeout, showToast, updateSEO, renderAdSlot, renderToolHeader, renderFaqs, renderRelatedTools } = window.APP;
 
-  const YOZORA_BASE = "https://tools-murex-phi.vercel.app";
-
-  function detectPlatform(url) {
-    if (!url) return null;
-    const lower = url.toLowerCase();
-    if (lower.includes("tiktok.com")) return { name: "TikTok", badge: "🎵 TikTok", color: "text-rose-400" };
-    if (lower.includes("twitter.com") || lower.includes("x.com")) return { name: "Twitter / X", badge: "🐦 Twitter/X", color: "text-sky-400" };
-    if (lower.includes("reddit.com")) return { name: "Reddit", badge: "🤖 Reddit", color: "text-orange-500" };
-    if (lower.includes("threads.net")) return { name: "Threads", badge: "🧵 Threads", color: "text-slate-200" };
-    if (lower.includes("vimeo.com")) return { name: "Vimeo", badge: "🎥 Vimeo", color: "text-cyan-400" };
-    if (lower.includes("dailymotion.com")) return { name: "Dailymotion", badge: "📺 Dailymotion", color: "text-amber-400" };
-    if (lower.includes("twitch.tv")) return { name: "Twitch", badge: "👾 Twitch", color: "text-purple-400" };
-    if (lower.includes("facebook.com") || lower.includes("fb.watch")) return { name: "Facebook", badge: "👥 Facebook", color: "text-blue-500" };
-    return { name: "Web Video", badge: "🌐 Web Video", color: "text-emerald-400" };
-  }
-
-  async function fetchViaYozora(videoUrl) {
-    const streamUrl = `${YOZORA_BASE}/api/download?url=${encodeURIComponent(videoUrl)}`;
-    console.log("Using Yozora direct stream URL:", streamUrl);
-    return { url: streamUrl, platform: "Video", isStream: true };
-  }
-
   // ============================================================
-  // REDDIT HANDLER — Uses Reddit's public JSON API (no auth needed)
-  // Avoids yt-dlp's datacenter IP block entirely
-  // ============================================================
-  async function fetchViaReddit(videoUrl) {
-    let cleanUrl = videoUrl.split("?")[0].replace(/\/+$/, "");
-    if (!cleanUrl.endsWith(".json")) {
-      cleanUrl = cleanUrl + ".json";
-    }
-
-    console.log("Fetching Reddit JSON API:", cleanUrl);
-
-    const proxies = [
-      "https://api.allorigins.win/raw?url=",
-      "https://corsproxy.io/?",
-      "https://api.codetabs.com/v1/proxy?quest="
-    ];
-
-    let lastError = null;
-
-    for (const proxy of proxies) {
-      try {
-        const proxyUrl = proxy + encodeURIComponent(cleanUrl);
-        const res = await fetchWithTimeout(proxyUrl, {
-          method: "GET",
-          headers: { "Accept": "application/json" }
-        }, 15000);
-
-        if (!res.ok) {
-          lastError = new Error(`Proxy returned ${res.status}`);
-          continue;
-        }
-
-        const text = await res.text();
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          lastError = new Error("Invalid JSON from Reddit");
-          continue;
-        }
-
-        const post = Array.isArray(data) ? data[0]?.data?.children?.[0]?.data : null;
-        if (!post) {
-          lastError = new Error("No post data in Reddit response");
-          continue;
-        }
-
-        let videoUrlOut = null;
-
-        // Method 1: Reddit-hosted video (v.redd.it)
-        if (post.media?.reddit_video?.fallback_url) {
-          videoUrlOut = post.media.reddit_video.fallback_url;
-        }
-
-        // Method 2: Preview video
-        if (!videoUrlOut && post.preview?.reddit_video_preview?.fallback_url) {
-          videoUrlOut = post.preview.reddit_video_preview.fallback_url;
-        }
-
-        // Method 3: Direct video file link
-        if (!videoUrlOut && post.url_overridden_by_dest) {
-          if (post.url_overridden_by_dest.match(/\.(mp4|webm|mov)$/i)) {
-            videoUrlOut = post.url_overridden_by_dest;
-          } else {
-            // External platform — let Yozora handle it
-            return await fetchViaYozora(post.url_overridden_by_dest);
-          }
-        }
-
-        if (!videoUrlOut) {
-          lastError = new Error("No video URL found in Reddit post");
-          continue;
-        }
-
-        console.log("✅ Reddit video found:", videoUrlOut);
-        return { url: videoUrlOut, platform: "Reddit" };
-
-      } catch (err) {
-        lastError = err;
-        console.warn("Reddit proxy attempt failed:", err.message);
-      }
-    }
-
-    throw lastError || new Error("All Reddit proxies failed");
-  }
-
-  // ============================================================
-  // TOOL 1: All Video Downloader
+  // TOOL 1: TikTok Video Downloader
   // ============================================================
   function renderVideoDownloader(container) {
     updateSEO({
-      title: "All Video Downloader - Download TikTok, X, Reddit Videos as MP4",
-      description: "Fast free online video downloader. Auto-detects TikTok, Twitter/X, Reddit, and 1000+ sites. Save HD MP4 without watermarks. No signup required.",
+      title: "TikTok Video Downloader - Download TikTok Videos Without Watermark",
+      description: "Download TikTok videos in HD without watermark. Fast, free, no signup required. Paste any TikTok link and save as MP4 instantly.",
       path: "/tools/video-downloader",
-      appName: "All Video Downloader",
+      appName: "TikTok Video Downloader",
       faqs: [
-        { q: "Is this video downloader completely free?", a: "Yes, 100% free with unlimited downloads and no software installation required." },
+        { q: "Is this TikTok downloader completely free?", a: "Yes, 100% free with unlimited downloads and no software installation required." },
         { q: "Does it remove TikTok watermarks?", a: "Yes, TikTok videos are fetched in high-definition without watermarks via direct MP4 stream extraction." },
         { q: "Do you store any downloaded files?", a: "No. All media links are fetched directly into your browser memory and saved to your device. We store zero user files." },
-        { q: "Which platforms are supported?", a: "TikTok, Twitter/X, Reddit, Threads, Vimeo, Dailymotion, Facebook, and Twitch clips. YouTube and Instagram are not supported due to platform restrictions on free hosting." }
+        { q: "Can I download the audio as MP3?", a: "Yes! When you paste a TikTok link, both MP4 video and MP3 audio download options are provided." }
       ],
-      breadcrumbs: [{ name: "Home", path: "/" }, { name: "All Video Downloader", path: "/tools/video-downloader" }]
+      breadcrumbs: [{ name: "Home", path: "/" }, { name: "TikTok Video Downloader", path: "/tools/video-downloader" }]
     });
 
     container.innerHTML = `
-      ${renderToolHeader("All Video Downloader", "Download HD videos from TikTok, Twitter/X, Reddit, and 1000+ other sites.", "🎬", "Universal MP4 Downloader")}
+      ${renderToolHeader("TikTok Video Downloader", "Download TikTok videos in HD without watermark — fast, free, no signup.", "🎵", "No Watermark · MP4 + MP3")}
       
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
         <form id="video-form" class="space-y-4">
           <div>
-            <label for="video-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Paste Video URL</label>
+            <label for="video-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Paste TikTok Video URL</label>
             <div class="relative">
-              <input type="url" id="video-url" required placeholder="https://www.tiktok.com/@user/video/... or any video link" 
+              <input type="url" id="video-url" required placeholder="https://www.tiktok.com/@user/video/..." 
                 class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 transition-colors pr-24 outline-none" />
               <button type="button" id="paste-btn" class="absolute right-2 top-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">
                 Paste
@@ -154,7 +45,7 @@
           </div>
 
           <button type="submit" id="download-submit-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm">
-            <span>⚡ Fetch Download Links</span>
+            <span>⚡ Download TikTok Video</span>
           </button>
         </form>
 
@@ -164,37 +55,39 @@
       ${renderAdSlot("Below Tool Card")}
 
       <section class="mt-12 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 text-slate-300 space-y-6">
-        <h2 class="text-xl font-bold text-white">How to Download Videos from Supported Sites</h2>
+        <h2 class="text-xl font-bold text-white">How to Download TikTok Videos Without Watermark</h2>
         <p class="text-xs sm:text-sm leading-relaxed text-slate-400">
-          AllToolsHub All Video Downloader provides a clean, zero-software solution for saving high-definition video files directly to your phone, tablet, or PC. Whether you need a trending TikTok recipe without watermarks, a Twitter/X news clip, or an archival copy of a Reddit discussion, our engine extracts direct MP4 media streams instantly.
+          AllToolsHub TikTok Video Downloader provides a clean, zero-software solution for saving high-definition TikTok videos directly to your phone, tablet, or PC. Whether you need to save a trending recipe, a dance tutorial, or a viral clip for offline viewing, our engine extracts the direct MP4 media stream instantly — no watermark, no logo, no quality loss.
         </p>
 
         <h3 class="text-base font-bold text-white mt-4">Step-by-Step Instructions</h3>
         <ol class="list-decimal pl-5 space-y-2 text-xs sm:text-sm text-slate-400">
-          <li><strong>Copy Link:</strong> Open the video in your app or browser and tap the "Share" or "Copy link" option.</li>
-          <li><strong>Paste URL:</strong> Paste the copied link into the input box above. Our intelligent regex will identify the host platform immediately.</li>
-          <li><strong>Generate & Download:</strong> Click "Fetch Download Links" and save the video directly to your storage.</li>
+          <li><strong>Copy the TikTok link:</strong> Open the video in the TikTok app and tap the "Share" arrow → "Copy link".</li>
+          <li><strong>Paste it above:</strong> Paste the copied URL into the input box above. Or tap "Paste" to paste from your clipboard automatically.</li>
+          <li><strong>Click Download:</strong> Press the "Download TikTok Video" button and wait 2–4 seconds.</li>
+          <li><strong>Save MP4 or MP3:</strong> Choose to save the video as MP4 (no watermark) or the audio track as MP3.</li>
         </ol>
 
-        <h3 class="text-base font-bold text-white mt-4">Supported Social & Streaming Networks</h3>
-        <ul class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-300">
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ TikTok (No Watermark)</li>
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ Twitter / X Videos</li>
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ Reddit & Threads Media</li>
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ Facebook Watch Videos</li>
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ Vimeo & Dailymotion</li>
-          <li class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">✓ Twitch Clips</li>
+        <h3 class="text-base font-bold text-white mt-4">Key Features</h3>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ 100% Free, No Signup</li>
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ No Watermark on Downloads</li>
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ HD Quality MP4</li>
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ Optional MP3 Audio Extract</li>
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ Works on iPhone & Android</li>
+          <li class="bg-slate-950 p-2.5 rounded-lg border border-emerald-500/40">✓ No Ads Blocking the Tool</li>
         </ul>
 
-        <div class="p-4 bg-slate-950 rounded-xl border border-amber-500/30 text-xs text-amber-200/90 leading-relaxed">
-          <strong class="text-amber-400">Note:</strong> YouTube and Instagram downloads are not supported. These platforms block automated requests from free hosting infrastructure. Please use their official apps or a dedicated paid service for those platforms.
+        <div class="p-4 bg-slate-950 rounded-xl border border-slate-700 text-xs text-slate-400 leading-relaxed">
+          <strong class="text-slate-300">Supported URL formats:</strong> tiktok.com/@user/video/..., vm.tiktok.com/..., vt.tiktok.com/... — any public TikTok video link works.
         </div>
       </section>
 
       ${renderFaqs([
-        { q: "Can I download videos on an iPhone or Android phone?", a: "Yes. Simply open AllToolsHub in Safari, Chrome, or any mobile browser, paste your link, tap download, and save the file directly to your Files or Photos app." },
-        { q: "Is downloading videos legal?", a: "Downloading public videos for offline personal use, educational research, and fair use analysis is standard practice. Always respect original creator copyrights and platform terms." },
-        { q: "Why don't YouTube and Instagram work?", a: "YouTube and Instagram actively block automated requests from datacenter servers. Their content requires either a paid residential proxy or a logged-in user session, which is not feasible on free hosting." }
+        { q: "Can I download TikTok videos on iPhone or Android?", a: "Yes. Open AllToolsHub in Safari or Chrome on your phone, paste a TikTok link, tap Download, then choose 'Save Video' to save the MP4 to your Files or Photos app." },
+        { q: "Is downloading TikTok videos legal?", a: "Downloading public TikTok videos for personal offline viewing is common practice. Always respect the original creator's copyright and platform terms. Do not re-upload or monetize someone else's content without permission." },
+        { q: "Does the download include the audio?", a: "Yes, the MP4 includes the original audio. You can also click the separate 'Audio MP3' button to download only the sound." },
+        { q: "What if the download fails?", a: "Make sure the video is public (not private), the link is fresh (some TikTok URLs expire), and try again in a few seconds. TikTok occasionally rate-limits heavy usage." }
       ])}
 
       ${renderRelatedTools("video-downloader")}
@@ -218,9 +111,11 @@
     });
 
     urlInput.addEventListener("input", () => {
-      const detected = detectPlatform(urlInput.value);
-      if (detected) {
-        detector.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 ${detected.color}">Detected: ${detected.badge}</span>`;
+      const val = urlInput.value.toLowerCase();
+      if (val.includes("tiktok.com")) {
+        detector.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-rose-400">🎵 TikTok link detected</span>`;
+      } else if (val.length > 5) {
+        detector.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-amber-400">⚠️ Please paste a TikTok URL</span>`;
       } else {
         detector.innerHTML = "";
       }
@@ -231,130 +126,74 @@
       const url = urlInput.value.trim();
       if (!url) return;
 
-      resultBox.classList.remove("hidden");
-      resultBox.innerHTML = `
-        <div class="p-6 bg-slate-950/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3">
-          <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs text-slate-300 font-medium">Extracting media streams... Please hold on.</span>
-        </div>
-      `;
-
-      const platform = detectPlatform(url);
-
-      // Reject YouTube and Instagram with a friendly message
-      const lower = url.toLowerCase();
-      if (lower.includes("youtube.com") || lower.includes("youtu.be") || lower.includes("instagram.com")) {
+      // Validate that it's a TikTok URL
+      if (!url.toLowerCase().includes("tiktok.com")) {
+        resultBox.classList.remove("hidden");
         resultBox.innerHTML = `
-          <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
+          <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-2">
             <div class="flex items-center gap-2 text-amber-400 text-xs font-bold">
-              <span>⚠️</span> This platform isn't supported
+              <span>⚠️</span> This tool only supports TikTok
             </div>
             <p class="text-xs text-slate-300 leading-relaxed">
-              YouTube and Instagram block automated downloads from free hosting infrastructure. Please use their official apps or a dedicated paid service for these platforms. We support TikTok, Twitter/X, Reddit, Facebook, Vimeo, Dailymotion, Threads, and Twitch.
+              Please paste a valid TikTok video URL (starts with <code class="text-emerald-400">https://www.tiktok.com/</code> or <code class="text-emerald-400">https://vm.tiktok.com/</code>).
             </p>
           </div>
         `;
         return;
       }
 
+      resultBox.classList.remove("hidden");
+      resultBox.innerHTML = `
+        <div class="p-6 bg-slate-950/80 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3">
+          <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs text-slate-300 font-medium">Fetching TikTok video... This usually takes 2–4 seconds.</span>
+        </div>
+      `;
+
       try {
-        let result = null;
+        const res = await fetchWithTimeout(`${CONFIG.TIKWM_API}?url=${encodeURIComponent(url)}`, {}, 20000);
+        const data = await res.json();
 
-        // Strategy 1: TikTok → TikWM
-        if (platform && platform.name === "TikTok") {
-          try {
-            const res = await fetchWithTimeout(`${CONFIG.TIKWM_API}?url=${encodeURIComponent(url)}`);
-            const data = await res.json();
-            if (data && data.data && data.data.play) {
-              const d = data.data;
-              resultBox.innerHTML = `
-                <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
-                  <div class="flex flex-col sm:flex-row gap-4 items-center">
-                    <img src="${d.cover}" class="w-24 h-24 object-cover rounded-lg border border-slate-800" alt="Video thumbnail" />
-                    <div class="flex-1">
-                      <span class="text-[10px] uppercase font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">TikTok HD</span>
-                      <h4 class="text-sm font-semibold text-white mt-1 line-clamp-2">${d.title || "TikTok Video"}</h4>
-                      <p class="text-xs text-slate-400 mt-1">Author: @${d.author?.unique_id || "creator"}</p>
-                    </div>
-                  </div>
-                  <div class="flex flex-wrap gap-2 pt-2">
-                    <a href="${d.play}" target="_blank" download="tiktok_video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-lg text-xs transition">
-                      ⬇️ Save MP4 (No Watermark)
-                    </a>
-                    ${d.music ? `<a href="${d.music}" target="_blank" download="audio.mp3" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 px-4 rounded-lg text-xs font-medium transition">🎵 Audio MP3</a>` : ''}
-                  </div>
-                </div>
-              `;
-              showToast("TikTok video ready!");
-              return;
-            }
-          } catch (err) {
-            console.warn("TikWM failed:", err);
-          }
+        if (!data || !data.data || !data.data.play) {
+          throw new Error(data?.msg || "TikTok did not return a video URL");
         }
 
-        // Strategy 2: Reddit → Reddit public JSON API (bypasses yt-dlp IP block)
-        if (platform && platform.name === "Reddit") {
-          try {
-            const r = await fetchViaReddit(url);
-            if (r && r.url) result = r;
-          } catch (err) {
-            console.warn("Reddit handler failed:", err);
-          }
-        }
+        const d = data.data;
 
-        // Strategy 3: Yozora (Vercel) for other platforms
-        if (!result) {
-          try {
-            const y = await fetchViaYozora(url);
-            if (y && y.url) result = y;
-          } catch (err) {
-            console.warn("Yozora failed:", err);
-          }
-        }
-
-        if (result && result.url) {
-          resultBox.innerHTML = `
-            <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
-              <div>
-                <span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Stream Ready</span>
-                <h4 class="text-sm font-semibold text-white mt-1">${platform?.name || "Video"} — HD Stream Ready</h4>
-              </div>
-              <div class="rounded-lg overflow-hidden bg-black max-h-64 flex justify-center">
-                <video src="${result.url}" controls class="max-h-64 w-full" preload="metadata"></video>
-              </div>
-              <div class="flex gap-2">
-                <a href="${result.url}" target="_blank" download="video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
-                  ⬇️ Save Video (MP4)
-                </a>
-              </div>
-            </div>
-          `;
-          showToast("Stream found successfully!");
-        } else {
-          resultBox.innerHTML = `
-            <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
-              <div class="flex items-center gap-2 text-amber-400 text-xs font-bold">
-                <span>⚠️</span> Stream temporarily blocked by target platform
-              </div>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                The platform detected an automated request. Try again in a few minutes, or use one of these alternatives:
-              </p>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <a href="https://cobalt.tools" target="_blank" rel="noopener" class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-600 transition">
-                  Open via Cobalt Portal ↗
-                </a>
-                <button type="button" onclick="navigator.clipboard.writeText('${url}'); alert('URL copied to clipboard!');" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-700 transition">
-                  Copy Link Again
-                </button>
-              </div>
-            </div>
-          `;
-        }
-      } catch (error) {
         resultBox.innerHTML = `
-          <div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 rounded-xl text-xs">
-            Failed to process video link: ${error.message || "Network timeout"}. Please confirm the post is public and try again.
+          <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+              ${d.cover ? `<img src="${d.cover}" class="w-24 h-24 object-cover rounded-lg border border-slate-800" alt="Video thumbnail" />` : ''}
+              <div class="flex-1 text-center sm:text-left">
+                <span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">✓ TikTok HD Ready</span>
+                <h4 class="text-sm font-semibold text-white mt-1 line-clamp-2">${d.title || "TikTok Video"}</h4>
+                <p class="text-xs text-slate-400 mt-1">Author: @${d.author?.unique_id || "creator"}</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2 pt-2">
+              <a href="${d.play}" target="_blank" rel="noopener" download="tiktok_video.mp4" class="flex-1 min-w-[200px] text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
+                ⬇️ Save MP4 (No Watermark)
+              </a>
+              ${d.music ? `<a href="${d.music}" target="_blank" rel="noopener" download="tiktok_audio.mp3" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 px-4 rounded-lg text-xs font-medium transition">🎵 Audio MP3</a>` : ''}
+            </div>
+          </div>
+        `;
+        showToast("TikTok video ready!");
+
+      } catch (err) {
+        console.warn("TikTok download failed:", err);
+        resultBox.innerHTML = `
+          <div class="p-5 bg-slate-950 rounded-xl border border-rose-500/40 fade-up space-y-3">
+            <div class="flex items-center gap-2 text-rose-400 text-xs font-bold">
+              <span>⚠️</span> Couldn't fetch that TikTok video
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              ${err.message || "Unknown error"}. This might happen if:<br>
+              • The video is private or deleted<br>
+              • The link expired (TikTok URLs expire after some time)<br>
+              • TikTok is temporarily rate-limiting requests
+            </p>
+            <p class="text-xs text-slate-400">Try copying a fresh link from the TikTok app and paste again.</p>
           </div>
         `;
       }
@@ -488,7 +327,6 @@
 
     let currentMode = "convert";
     let loadedImage = null;
-    let originalFile = null;
 
     const dropzone = container.querySelector("#dropzone");
     const input = container.querySelector("#img-input");
@@ -565,7 +403,6 @@
         showToast("Please upload an image file (PNG, JPG, WebP)", "error");
         return;
       }
-      originalFile = file;
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -954,7 +791,7 @@
     });
   }
 
-  // Register tools to APP namespace (YouTube downloader removed)
+  // Register tools to APP namespace
   window.APP.renderVideoDownloader = renderVideoDownloader;
   window.APP.renderImageConverter = renderImageConverter;
   window.APP.renderImageToPdf = renderImageToPdf;
