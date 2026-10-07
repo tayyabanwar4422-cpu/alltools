@@ -1,7 +1,7 @@
 /**
  * AllToolsHub - Router & Informational Pages
  * Created by Tayyab Anwar
- * Home Page (Hero + 12-Tool Grid + SEO Copy + Ad Slots)
+ * Home Page (Hero + 12-Tool Grid + SEO Copy)
  * About Page, Privacy Policy, Terms of Service, Contact
  */
 (function() {
@@ -18,7 +18,7 @@
     });
 
     const tools = [
-      { key: "video-downloader", name: "All Video Downloader", icon: "🎬", tag: "TikTok, IG, X, Reddit", desc: "Download HD video streams from 1000+ social and video streaming platforms with auto-detection.", link: "#/tools/video-downloader" },
+      { key: "video-downloader", name: "All Video Downloader", icon: "🎬", tag: "TikTok, X, Reddit", desc: "Download HD video streams from TikTok, Twitter/X, Reddit, and 1000+ other social platforms.", link: "#/tools/video-downloader" },
       { key: "image-converter", name: "Image Converter & BG Remover", icon: "🖼️", tag: "PNG, JPG, WebP + Cutout", desc: "Batch convert image formats, scale pixel dimensions, and remove backgrounds with client-side AI masking.", link: "#/tools/image-converter" },
       { key: "image-to-pdf", name: "Image to PDF Converter", icon: "📄", tag: "Multi-Image Compiler", desc: "Merge multiple JPG, PNG, and WebP pictures into a clean printable PDF with custom page geometry.", link: "#/tools/image-to-pdf" },
       { key: "wechat-downloader", name: "WeChat Video Downloader", icon: "💬", tag: "Public Article Media", desc: "Inspect and extract public embedded video media from WeChat official account articles.", link: "#/tools/wechat-downloader" },
@@ -26,7 +26,7 @@
       { key: "numerology-calculator", name: "Numerology Calculator", icon: "🔢", tag: "Life Path & Destiny", desc: "Discover your Life Path, Expression, Soul Urge, Personality, Birthday and Personal Year numbers.", link: "#/tools/numerology-calculator" },
       { key: "age-calculator", name: "Age & Birthday Countdown", icon: "⏳", tag: "Live Ticking Seconds", desc: "Chronological age breakdown, total days, hours, live seconds lived, and next birthday countdown timer.", link: "#/tools/age-calculator" },
       { key: "paint-calculator", name: "Room Paint Calculator", icon: "🎨", tag: "Litres & Budget Estimator", desc: "Determine room surface areas, door/window deductions, coats required, and total renovation paint cost.", link: "#/tools/paint-calculator" },
-      { key: "title-generator", name: "Viral Title Generator", icon: "💡", tag: "High-CTR Headlines", desc: "Generate 6 compelling, click-worthy titles for YouTube videos, blog posts, how-to guides, and tweets.", link: "#/tools/title-generator" },
+      { key: "title-generator", name: "Viral Title Generator", icon: "💡", tag: "High-CTR Headlines", desc: "Generate 6 compelling, click-worthy titles for blog posts, YouTube videos, how-to guides, and tweets.", link: "#/tools/title-generator" },
       { key: "word-counter", name: "Word & Character Counter", icon: "📝", tag: "Reading Time & Density", desc: "Count words, characters, sentences, estimated speaking/reading duration, and keyword frequencies.", link: "#/tools/word-counter" },
       { key: "qr-code-generator", name: "QR Code Generator", icon: "📱", tag: "Zero-Expiry PNGs", desc: "Create permanent QR codes for URLs, WiFi networks, and plain text with instant PNG download.", link: "#/tools/qr-code-generator" },
       { key: "password-generator", name: "Crypto Password Generator", icon: "🔐", tag: "Web Crypto Hardware PRNG", desc: "Generate uncrackable random passwords using hardware-backed cryptographic randomness and strength rating.", link: "#/tools/password-generator" }
@@ -144,7 +144,6 @@
           <p class="text-sm text-slate-400">Democratizing private, high-performance web utilities for global creators, professionals, and students.</p>
         </div>
 
-        <!-- Developer Card -->
         <div class="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-emerald-500/60 via-teal-400/40 to-emerald-500/60">
           <div class="rounded-2xl bg-slate-950 p-6 sm:p-8">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -230,7 +229,7 @@
 
           <h2 class="text-base font-bold text-white pt-2">3. External Links & Media Providers</h2>
           <p class="text-slate-400">
-            Our video downloading utilities interface with public media endpoints (such as TikTok, Instagram, and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
+            Our video downloading utilities interface with public media endpoints (such as TikTok, Twitter/X, and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
           </p>
 
           <h2 class="text-base font-bold text-white pt-2">4. Contact Information</h2>
