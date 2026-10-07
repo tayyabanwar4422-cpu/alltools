@@ -5,10 +5,26 @@
  * Tool 3: Image Converter + Resizer + BG Remover
  * Tool 4: Image to PDF Converter
  * Tool 5: WeChat Video Downloader
+ *
+ * Uses a self-hosted Yozora serverless function on Vercel for YouTube/Instagram
  */
 (function() {
   "use strict";
   const { CONFIG, fetchWithTimeout, showToast, updateSEO, renderAdSlot, renderToolHeader, renderFaqs, renderRelatedTools } = window.APP;
+
+  // ============================================================
+  // YOZORA VERCEL API CONFIGURATION
+  // ============================================================
+  const YOZORA_BASE = "https://tools-murex-phi.vercel.app";
+
+  // The Yozora project exposes its endpoint at one of these paths.
+  // We try them in order until one works.
+  const YOZORA_ENDPOINTS = [
+    YOZORA_BASE + "/api/download",
+    YOZORA_BASE + "/api/",
+    YOZORA_BASE + "/api",
+    YOZORA_BASE + "/download"
+  ];
 
   // Detect platform by URL pattern
   function detectPlatform(url) {
@@ -27,120 +43,98 @@
     return { name: "Generic Web Video", badge: "🌐 Web Video", color: "text-emerald-400" };
   }
 
-  // =============================================================
-  // MULTI-TIER VIDEO EXTRACTION ENGINE
-  // =============================================================
-
-  // Tier 1: Private Self-Hosted Cobalt API on Railway (PRIMARY for YouTube, IG, X, Reddit, etc.)
-  async function fetchViaCobalt(url, options = {}) {
-    const payload = {
-      url: url,
-      videoQuality: options.videoQuality || "720",
-      downloadMode: options.downloadMode || "auto",
-      audioFormat: options.audioFormat || "mp3",
-      filenameStyle: options.filenameStyle || "basic"
-    };
-
-    const endpoints = [CONFIG.COBALT_API, ...(CONFIG.COBALT_FALLBACK_APIS || [])].filter(Boolean);
+  // ============================================================
+  // YOZORA FETCH — tries every possible endpoint path until one works
+  // ============================================================
+  async function fetchViaYozora(videoUrl) {
     let lastError = null;
 
-    for (const endpoint of endpoints) {
+    for (const endpoint of YOZORA_ENDPOINTS) {
       try {
-        const resp = await fetchWithTimeout(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(payload)
-        }, 12000);
+        const fullUrl = `${endpoint}?url=${encodeURIComponent(videoUrl)}`;
+        console.log("Trying Yozora endpoint:", fullUrl);
 
-        if (!resp.ok) {
-          const errData = await resp.json().catch(() => ({}));
-          throw new Error(errData?.text || errData?.error || `HTTP ${resp.status}`);
+        const res = await fetchWithTimeout(fullUrl, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        }, 20000);
+
+        if (!res.ok) {
+          lastError = new Error(`HTTP ${res.status} from ${endpoint}`);
+          continue;
         }
 
-        const data = await resp.json();
-        // Handle response formats:
-        // { "status": "redirect" | "stream" | "success", "url": "..." }
-        if (data && (data.url || data.audio)) {
-          return {
-            status: data.status || "success",
-            url: data.url || data.audio,
-            filename: data.filename || (options.downloadMode === "audio" ? "audio.mp3" : "video.mp4")
-          };
+        // Try JSON first
+        let data;
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          // Some endpoints return plain text URL
+          const text = await res.text();
+          if (text.trim().startsWith("http")) {
+            return { url: text.trim(), platform: "Video" };
+          }
+          try { data = JSON.parse(text); } catch { data = null; }
         }
-        if (data && (data.status === "redirect" || data.status === "stream" || data.status === "success") && data.url) {
-          return {
-            status: data.status,
-            url: data.url,
-            filename: data.filename || "video.mp4"
-          };
+
+        // Handle all possible response shapes
+        if (!data) {
+          lastError = new Error("Empty response from " + endpoint);
+          continue;
         }
-        if (data && data.text) {
-          throw new Error(data.text);
+
+        // Shape 1: { url: "..." }
+        if (data.url && typeof data.url === "string") {
+          return { url: data.url, platform: "Video" };
         }
+
+        // Shape 2: { data: { url: "..." } }
+        if (data.data && data.data.url) {
+          return { url: data.data.url, platform: "Video" };
+        }
+
+        // Shape 3: { data: { play: "..." } } (TikTok style)
+        if (data.data && data.data.play) {
+          return { url: data.data.play, platform: "Video" };
+        }
+
+        // Shape 4: { formats: [...] }
+        if (Array.isArray(data.formats) && data.formats.length > 0) {
+          const best = data.formats
+            .filter(f => f.url)
+            .sort((a, b) => (b.height || 0) - (a.height || 0))[0];
+          if (best && best.url) {
+            return { url: best.url, platform: "Video" };
+          }
+        }
+
+        // Shape 5: { links: [...] }
+        if (Array.isArray(data.links) && data.links.length > 0) {
+          const first = data.links.find(l => l.url || l.link);
+          if (first) {
+            return { url: first.url || first.link, platform: "Video" };
+          }
+        }
+
+        // Shape 6: array response [{ url: "..." }]
+        if (Array.isArray(data) && data.length > 0 && data[0].url) {
+          return { url: data[0].url, platform: "Video" };
+        }
+
+        lastError = new Error("Unrecognized response shape from " + endpoint);
       } catch (err) {
         lastError = err;
+        console.warn("Yozora endpoint failed:", endpoint, err.message);
       }
     }
-    throw lastError || new Error("Failed to extract media via Cobalt instance");
+
+    throw lastError || new Error("All Yozora endpoints failed");
   }
 
-  // Tier 2: TikWM API with 1-second rate-limit throttle (PRIMARY for TikTok only)
-  async function fetchTikWM(url) {
-    // Add a 1-second delay between TikWM requests to respect rate-limit
-    await new Promise(r => setTimeout(r, 1000));
-    const endpoint = `${CONFIG.TIKWM_API}?url=${encodeURIComponent(url)}`;
-    const res = await fetchWithTimeout(endpoint, {}, 10000);
-    if (!res.ok) {
-      throw new Error(`TikWM returned status ${res.status}`);
-    }
-    const data = await res.json();
-    if (data && data.code === 0 && data.data && data.data.play) {
-      return data.data;
-    }
-    throw new Error(data?.msg || "TikWM extraction failed or rate limited");
-  }
-
-  // Tier 3: Generic CORS Proxy HTML Scraping (LAST RESORT)
-  async function fetchGenericScrape(url) {
-    const proxies = CONFIG.CORS_PROXIES || [
-      "https://api.cors.lol/?url=",
-      "https://corsfix.com/proxy?url=",
-      "https://api.allorigins.win/raw?url="
-    ];
-
-    for (const proxy of proxies) {
-      try {
-        const fullUrl = `${proxy}${encodeURIComponent(url)}`;
-        const res = await fetchWithTimeout(fullUrl, {}, 8000);
-        if (!res.ok) continue;
-        const html = await res.text();
-
-        // Search for direct MP4 links, OpenGraph video, twitter stream, or video source tags
-        const videoMatch = html.match(/<meta[^>]+property=["']og:video(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i) ||
-                           html.match(/<meta[^>]+name=["']twitter:player:stream["'][^>]+content=["']([^"']+)["']/i) ||
-                           html.match(/<video[^>]+src=["']([^"']+\.mp4[^"']*)["']/i) ||
-                           html.match(/<source[^>]+src=["']([^"']+\.mp4[^"']*)["']/i) ||
-                           html.match(/"contentUrl":\s*"([^"]+\.mp4[^"]*)"/i) ||
-                           html.match(/data-src=["']([^"']+\.mp4[^"']*)["']/i);
-
-        if (videoMatch && videoMatch[1]) {
-          let mediaUrl = videoMatch[1].replace(/&amp;/g, "&");
-          if (mediaUrl.startsWith("//")) mediaUrl = "https:" + mediaUrl;
-          return { url: mediaUrl, platform: "Generic Scraper" };
-        }
-      } catch {
-        // try next proxy
-      }
-    }
-    throw new Error("Generic scraping found no public media stream");
-  }
-
-  // -------------------------------------------------------------
+  // ============================================================
   // TOOL 1: All Video Downloader
-  // -------------------------------------------------------------
+  // ============================================================
   function renderVideoDownloader(container) {
     updateSEO({
       title: "All Video Downloader - Download TikTok, YouTube, IG, X, Reddit MP4",
@@ -158,7 +152,6 @@
     container.innerHTML = `
       ${renderToolHeader("All Video Downloader", "Download HD videos from TikTok, YouTube, Instagram, X, Reddit, Vimeo and 1000+ sites.", "🎬", "Universal MP4 Downloader")}
       
-      <!-- Interactive Card -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
         <form id="video-form" class="space-y-4">
           <div>
@@ -178,13 +171,11 @@
           </button>
         </form>
 
-        <!-- Result / Loading State -->
         <div id="video-result" class="mt-6 hidden"></div>
       </div>
 
       ${renderAdSlot("Below Tool Card")}
 
-      <!-- Detailed SEO Content -->
       <section class="mt-12 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 text-slate-300 space-y-6">
         <h2 class="text-xl font-bold text-white">How to Download Videos from Any Website Online</h2>
         <p class="text-xs sm:text-sm leading-relaxed text-slate-400">
@@ -220,7 +211,6 @@
       ${renderRelatedTools("video-downloader")}
     `;
 
-    // Event Listeners
     const urlInput = container.querySelector("#video-url");
     const pasteBtn = container.querySelector("#paste-btn");
     const detector = container.querySelector("#platform-detector");
@@ -260,149 +250,131 @@
         </div>
       `;
 
-      const isTikTok = url.toLowerCase().includes("tiktok.com");
+      const platform = detectPlatform(url);
 
-      // -----------------------------------------------------------
-      // TIER 2: TikWM API (PRIMARY for TikTok only)
-      // -----------------------------------------------------------
-      if (isTikTok) {
-        try {
-          const d = await fetchTikWM(url);
-          resultBox.innerHTML = `
-            <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
-              <div class="flex flex-col sm:flex-row gap-4 items-center">
-                <img src="${d.cover}" class="w-24 h-24 object-cover rounded-lg border border-slate-800" alt="Video thumbnail" />
-                <div class="flex-1">
-                  <span class="text-[10px] uppercase font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">TikTok HD (TikWM)</span>
-                  <h4 class="text-sm font-semibold text-white mt-1 line-clamp-2">${d.title || "TikTok Video"}</h4>
-                  <p class="text-xs text-slate-400 mt-1">Author: @${d.author?.unique_id || "creator"}</p>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-2 pt-2">
-                <a href="${d.play}" target="_blank" download="tiktok_video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-lg text-xs transition">
-                  ⬇️ Save MP4 (No Watermark)
-                </a>
-                ${d.music ? `<a href="${d.music}" target="_blank" download="audio.mp3" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 px-4 rounded-lg text-xs font-medium transition">🎵 Audio MP3</a>` : ''}
-              </div>
-            </div>
-          `;
-          showToast("TikTok video stream ready for download!");
-          return;
-        } catch (tikwmErr) {
-          console.warn("TikWM rate-limit or error, falling back to Cobalt...", tikwmErr);
-        }
-      }
-
-      // -----------------------------------------------------------
-      // TIER 1: Self-hosted Cobalt instance on Railway
-      // (PRIMARY for YouTube, IG, X, Reddit, Vimeo, Dailymotion, etc.)
-      // -----------------------------------------------------------
       try {
-        const cobaltRes = await fetchViaCobalt(url, {
-          videoQuality: "720",
-          downloadMode: "auto",
-          audioFormat: "mp3",
-          filenameStyle: "basic"
-        });
+        let result = null;
 
-        if (cobaltRes && cobaltRes.url) {
-          const targetUrl = cobaltRes.url;
+        // ---- Strategy 1: TikTok → TikWM (best for TikTok) ----
+        if (platform && platform.name === "TikTok") {
+          try {
+            const res = await fetchWithTimeout(`${CONFIG.TIKWM_API}?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+            if (data && data.data && data.data.play) {
+              const d = data.data;
+              resultBox.innerHTML = `
+                <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
+                  <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <img src="${d.cover}" class="w-24 h-24 object-cover rounded-lg border border-slate-800" alt="Video thumbnail" />
+                    <div class="flex-1">
+                      <span class="text-[10px] uppercase font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">TikTok HD</span>
+                      <h4 class="text-sm font-semibold text-white mt-1 line-clamp-2">${d.title || "TikTok Video"}</h4>
+                      <p class="text-xs text-slate-400 mt-1">Author: @${d.author?.unique_id || "creator"}</p>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap gap-2 pt-2">
+                    <a href="${d.play}" target="_blank" download="tiktok_video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-lg text-xs transition">
+                      ⬇️ Save MP4 (No Watermark)
+                    </a>
+                    ${d.music ? `<a href="${d.music}" target="_blank" download="audio.mp3" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 px-4 rounded-lg text-xs font-medium transition">🎵 Audio MP3</a>` : ''}
+                  </div>
+                </div>
+              `;
+              showToast("TikTok video ready!");
+              return;
+            }
+          } catch (err) {
+            console.warn("TikWM failed, trying Yozora:", err);
+          }
+        }
+
+        // ---- Strategy 2: Yozora (Vercel) → handles YouTube, Instagram, X, etc. ----
+        try {
+          const y = await fetchViaYozora(url);
+          if (y && y.url) {
+            result = y;
+            console.log("✅ Yozora succeeded:", y);
+          }
+        } catch (err) {
+          console.warn("Yozora failed:", err);
+        }
+
+        // ---- Strategy 3: Cobalt public (last resort for other platforms) ----
+        if (!result) {
+          try {
+            const apiEndpoints = [CONFIG.COBALT_API, ...(CONFIG.COBALT_FALLBACK_APIS || [])];
+            for (const endpoint of apiEndpoints) {
+              try {
+                const resp = await fetchWithTimeout(endpoint, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                  body: JSON.stringify({ url, videoQuality: "720" })
+                }, 8000);
+                if (resp.ok) {
+                  const data = await resp.json();
+                  if (data && (data.url || data.audio)) {
+                    result = { url: data.url || data.audio, platform: platform?.name || "Video" };
+                    break;
+                  }
+                }
+              } catch {}
+            }
+          } catch {}
+        }
+
+        // ---- Success — display video ----
+        if (result && result.url) {
           resultBox.innerHTML = `
             <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Stream Ready (Private Cobalt)</span>
-                  <h4 class="text-sm font-semibold text-white mt-1">High-Definition Media Stream Ready</h4>
-                  <p class="text-xs text-slate-400 mt-0.5">High-speed stream extracted via private Railway instance</p>
-                </div>
+              <div>
+                <span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Stream Ready</span>
+                <h4 class="text-sm font-semibold text-white mt-1">${platform?.name || "Video"} — HD Stream Ready</h4>
               </div>
               <div class="rounded-lg overflow-hidden bg-black max-h-64 flex justify-center">
-                <video src="${targetUrl}" controls class="max-h-64 w-full" preload="metadata"></video>
+                <video src="${result.url}" controls class="max-h-64 w-full" preload="metadata"></video>
               </div>
               <div class="flex gap-2">
-                <a href="${targetUrl}" target="_blank" download="${cobaltRes.filename || 'video.mp4'}" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
+                <a href="${result.url}" target="_blank" download="video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
                   ⬇️ Save Video (MP4)
                 </a>
               </div>
             </div>
           `;
           showToast("Stream found successfully!");
-          return;
-        }
-      } catch (cobaltErr) {
-        console.warn("Cobalt instance extraction failed:", cobaltErr);
-        if (isTikTok) {
-          // Both TikWM and Cobalt failed for TikTok
+        } else {
+          // ---- All methods failed ----
           resultBox.innerHTML = `
-            <div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 rounded-xl text-xs space-y-2">
-              <div class="font-bold flex items-center gap-2"><span>⚠️</span> Rate Limit Reached</div>
-              <p>TikTok extraction is temporarily rate-limited. Please wait 10 seconds and try again.</p>
-            </div>
-          `;
-          return;
-        }
-      }
-
-      // -----------------------------------------------------------
-      // TIER 3: Generic CORS Proxy HTML Scraping (LAST RESORT)
-      // -----------------------------------------------------------
-      try {
-        const scrapeRes = await fetchGenericScrape(url);
-        if (scrapeRes && scrapeRes.url) {
-          resultBox.innerHTML = `
-            <div class="p-6 bg-slate-950 rounded-xl border border-emerald-500/40 fade-up space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Stream Extracted (HTML Scraper)</span>
-                  <h4 class="text-sm font-semibold text-white mt-1">Direct Media Stream Found</h4>
-                  <p class="text-xs text-slate-400 mt-0.5">Discovered in public HTML page tags</p>
-                </div>
+            <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
+              <div class="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                <span>⚠️</span> Direct stream blocked or rate-limited by upstream provider
               </div>
-              <div class="rounded-lg overflow-hidden bg-black max-h-64 flex justify-center">
-                <video src="${scrapeRes.url}" controls class="max-h-64 w-full" preload="metadata"></video>
-              </div>
-              <div class="flex gap-2">
-                <a href="${scrapeRes.url}" target="_blank" download="video.mp4" class="flex-1 text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
-                  ⬇️ Save Video (MP4)
+              <p class="text-xs text-slate-300 leading-relaxed">
+                This platform is currently blocking automated requests. Try again in a few minutes, or use one of these alternatives:
+              </p>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <a href="https://cobalt.tools" target="_blank" rel="noopener" class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-600 transition">
+                  Open via Cobalt Portal ↗
                 </a>
+                <button type="button" onclick="navigator.clipboard.writeText('${url}'); alert('URL copied to clipboard!');" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-700 transition">
+                  Copy Link Again
+                </button>
               </div>
             </div>
           `;
-          showToast("Stream extracted via HTML scraper!");
-          return;
         }
-      } catch (scrapeErr) {
-        console.warn("Generic HTML scraper failed:", scrapeErr);
+      } catch (error) {
+        resultBox.innerHTML = `
+          <div class="p-4 bg-rose-950/60 border border-rose-800 text-rose-300 rounded-xl text-xs">
+            Failed to process video link: ${error.message || "Network timeout"}. Please confirm the post is public and try again.
+          </div>
+        `;
       }
-
-      // If all tiers failed
-      resultBox.innerHTML = `
-        <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
-          <div class="flex items-center gap-2 text-amber-400 text-xs font-bold">
-            <span>⚠️</span> Couldn't extract this video right now
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Public extraction endpoints are rate-limited or blocked by upstream anti-bot systems. To get guaranteed 100% video downloads across YouTube, Instagram, X, and Reddit, deploy your free private Cobalt instance on Railway:
-          </p>
-          <div class="flex flex-wrap gap-2 pt-1">
-            <a href="https://railway.com/deploy/cobalt-youtube-downloader" target="_blank" rel="noopener" class="bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-600 transition">
-              🚀 Deploy Private Cobalt on Railway (Free) ↗
-            </a>
-            <button type="button" onclick="navigator.clipboard.writeText('${url}'); alert('URL copied to clipboard!');" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-700 transition">
-              Copy Link Again
-            </button>
-          </div>
-          <p class="text-[11px] text-slate-400 pt-1">
-            Once deployed, set <code class="text-emerald-400 font-mono">COBALT_API</code> in CONFIG to your generated domain (e.g. <code class="text-slate-300">https://your-app.up.railway.app</code>).
-          </p>
-        </div>
-      `;
     });
   }
 
-  // -------------------------------------------------------------
+  // ============================================================
   // TOOL 2: Dedicated YouTube Video & MP3 Downloader
-  // -------------------------------------------------------------
+  // ============================================================
   function renderYouTubeDownloader(container) {
     updateSEO({
       title: "YouTube Video & MP3 Downloader - 1080p MP4 & 320kbps Audio",
@@ -421,7 +393,6 @@
       ${renderToolHeader("YouTube Video & MP3 Downloader", "Dedicated high-performance extractor for YouTube videos, music, podcasts, and Shorts.", "▶️", "1080p Video & 320k Audio")}
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-        <!-- Toggle Tabs: Video vs Audio -->
         <div class="flex rounded-xl bg-slate-950 p-1 mb-6 border border-slate-800 max-w-md mx-auto">
           <button type="button" id="tab-mp4" class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-slate-950">
             🎥 MP4 (Video)
@@ -457,14 +428,6 @@
                 <option value="128">128 kbps (Compact Size)</option>
               </select>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Estimated Size</label>
-              <div id="size-estimate" class="bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-400 flex items-center justify-between">
-                <span>Approx. Size:</span>
-                <span class="text-emerald-400 font-mono font-bold" id="est-size-val">~25 - 45 MB</span>
-              </div>
-            </div>
           </div>
 
           <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-[1.01] transition flex items-center justify-center gap-2 text-sm">
@@ -485,13 +448,11 @@
       ${renderRelatedTools("youtube-downloader")}
     `;
 
-    // Logic
     let isAudio = false;
     const tabMp4 = container.querySelector("#tab-mp4");
     const tabMp3 = container.querySelector("#tab-mp3");
     const qualityWrap = container.querySelector("#quality-wrapper");
     const audioWrap = container.querySelector("#audio-wrapper");
-    const estVal = container.querySelector("#est-size-val");
     const form = container.querySelector("#yt-form");
     const ytUrl = container.querySelector("#yt-url");
     const resultBox = container.querySelector("#yt-result");
@@ -502,7 +463,6 @@
       tabMp3.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white";
       qualityWrap.classList.remove("hidden");
       audioWrap.classList.add("hidden");
-      estVal.textContent = "~25 - 45 MB";
     });
 
     tabMp3.addEventListener("click", () => {
@@ -511,7 +471,6 @@
       tabMp4.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white";
       qualityWrap.classList.add("hidden");
       audioWrap.classList.remove("hidden");
-      estVal.textContent = "~4 - 8 MB";
     });
 
     form.addEventListener("submit", async (e) => {
@@ -523,82 +482,49 @@
       resultBox.innerHTML = `
         <div class="p-6 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center gap-3">
           <div class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs text-slate-300 font-medium">Extracting YouTube ${isAudio ? 'MP3 audio' : 'MP4 video'} stream...</span>
+          <span class="text-xs text-slate-300">Contacting video processor...</span>
         </div>
       `;
 
       try {
-        const quality = container.querySelector("#yt-quality") ? container.querySelector("#yt-quality").value : "720";
-        const audioQuality = container.querySelector("#yt-audio-quality") ? container.querySelector("#yt-audio-quality").value : "320";
-
-        const cobaltResult = await fetchViaCobalt(url, {
-          videoQuality: quality,
-          downloadMode: isAudio ? "audio" : "auto",
-          audioFormat: "mp3",
-          filenameStyle: "basic"
-        });
-
-        if (cobaltResult && cobaltResult.url) {
-          const downloadUrl = cobaltResult.url;
+        const y = await fetchViaYozora(url);
+        if (y && y.url) {
           resultBox.innerHTML = `
-            <div class="p-5 bg-slate-950 rounded-xl border border-emerald-500/50 fade-up space-y-4">
+            <div class="p-5 bg-slate-950 rounded-xl border border-emerald-500/50 fade-up space-y-3">
               <div class="flex items-center justify-between">
-                <div>
-                  <span class="text-xs font-bold text-emerald-400">✓ ${isAudio ? 'MP3 Audio Extracted' : 'MP4 Video Extracted'}</span>
-                  <div class="text-[11px] text-slate-400 font-mono mt-0.5">${isAudio ? `Bitrate: ~${audioQuality} kbps MP3` : `Quality: ${quality}p Full HD`}</div>
-                </div>
-                <span class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">Private Stream</span>
+                <span class="text-xs font-bold text-emerald-400">✓ ${isAudio ? 'MP3 Audio' : 'MP4 Video'} Ready</span>
+                <span class="text-[11px] text-slate-400 font-mono">Format: ${isAudio ? 'MP3' : 'MP4'}</span>
               </div>
-
-              ${!isAudio ? `
-                <div class="rounded-lg overflow-hidden bg-black max-h-64 flex justify-center">
-                  <video src="${downloadUrl}" controls class="max-h-64 w-full" preload="metadata"></video>
-                </div>
-              ` : `
-                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
-                  <audio src="${downloadUrl}" controls class="w-full"></audio>
-                </div>
-              `}
-
-              <a href="${downloadUrl}" target="_blank" download="${cobaltResult.filename || (isAudio ? 'youtube_audio.mp3' : 'youtube_video.mp4')}" class="block text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-xl text-xs transition shadow-lg shadow-emerald-500/20 hover:scale-[1.01]">
-                ⬇️ Download ${isAudio ? 'MP3 Audio' : 'MP4 Video (' + quality + 'p)'} Now
+              <div class="rounded-lg overflow-hidden bg-black max-h-64 flex justify-center">
+                <video src="${y.url}" controls class="max-h-64 w-full" preload="metadata"></video>
+              </div>
+              <a href="${y.url}" target="_blank" download="${isAudio ? 'youtube_audio.mp3' : 'youtube_video.mp4'}" class="block text-center bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-lg text-xs transition">
+                ⬇️ Download Now (${isAudio ? 'MP3' : 'MP4'})
               </a>
             </div>
           `;
-          showToast(isAudio ? "MP3 stream ready for download!" : "MP4 video ready for download!");
-        } else {
-          throw new Error("Unable to parse YouTube stream from Cobalt instance");
+          showToast("File ready for download!");
+          return;
         }
+        throw new Error("No URL returned");
       } catch (err) {
-        console.error("YouTube download error:", err);
+        console.warn("Yozora failed:", err);
         resultBox.innerHTML = `
-          <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
-            <div class="text-xs font-bold text-amber-400 flex items-center gap-2">
-              <span>⚠️</span> YouTube Stream Extraction Notice
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Public Cobalt APIs have been blocked by YouTube's anti-bot measures. To get unlimited, 100% free YouTube video & MP3 downloads without blocks, deploy your own private Cobalt instance on Railway:
-            </p>
-            <div class="flex flex-wrap gap-2 pt-2">
-              <a href="https://railway.com/deploy/cobalt-youtube-downloader" target="_blank" rel="noopener" class="inline-block bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs px-4 py-2.5 rounded-lg font-bold transition shadow-lg shadow-emerald-500/20">
-                🚀 Deploy Private Cobalt on Railway (1-Click) ↗
-              </a>
-              <button type="button" onclick="navigator.clipboard.writeText('${url}'); alert('URL copied to clipboard!');" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded-lg font-semibold transition">
-                Copy Video URL
-              </button>
-            </div>
-            <p class="text-[11px] text-slate-400 pt-1">
-              After deploying, update <code class="text-emerald-400 font-mono">COBALT_API</code> in your configuration to point to your Railway domain (e.g. <code class="text-slate-300">https://your-app.up.railway.app</code>).
-            </p>
+          <div class="p-5 bg-slate-950 rounded-xl border border-slate-800 fade-up space-y-3">
+            <div class="text-xs font-bold text-amber-400">Direct streaming limited for this video URL</div>
+            <p class="text-xs text-slate-400">YouTube is blocking our server IP. Try again in a few minutes, or use this alternative:</p>
+            <a href="https://cobalt.tools" target="_blank" class="inline-block bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-4 py-2 rounded-lg font-semibold transition">
+              Open Fallback Stream Engine ↗
+            </a>
           </div>
         `;
       }
     });
   }
 
-  // -------------------------------------------------------------
+  // ============================================================
   // TOOL 3: Image Converter + Resizer + BG Remover
-  // -------------------------------------------------------------
+  // ============================================================
   function renderImageConverter(container) {
     updateSEO({
       title: "Image Converter, Resizer & Free Background Remover (PNG, JPG, WebP)",
@@ -616,7 +542,6 @@
       ${renderToolHeader("Image Converter, Resizer & BG Remover", "Convert formats, change dimensions, and remove backgrounds right in your browser.", "🖼️", "100% Private In-Browser")}
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-        <!-- Sub-tabs -->
         <div class="flex rounded-xl bg-slate-950 p-1 mb-6 border border-slate-800 max-w-lg mx-auto">
           <button type="button" id="tab-convert" class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-slate-950">
             🔄 Convert Format
@@ -629,7 +554,6 @@
           </button>
         </div>
 
-        <!-- Dropzone -->
         <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40 transition group">
           <input type="file" id="img-input" accept="image/png, image/jpeg, image/webp" class="hidden" />
           <div class="flex flex-col items-center gap-3">
@@ -642,11 +566,8 @@
           </div>
         </div>
 
-        <!-- Working Panel -->
         <div id="img-panel" class="mt-6 hidden space-y-6">
-          <!-- Controls based on active tab -->
           <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-4">
-            <!-- Format settings -->
             <div id="ctrl-convert" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Target Output Format</label>
@@ -662,7 +583,6 @@
               </div>
             </div>
 
-            <!-- Resize settings -->
             <div id="ctrl-resize" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
               <div>
                 <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Width (px)</label>
@@ -678,7 +598,6 @@
               </div>
             </div>
 
-            <!-- BG Remover settings -->
             <div id="ctrl-bg" class="hidden text-xs text-slate-300 space-y-2">
               <p>Uses client-side smart edge transparency chroma masking. Cleans solid/light backgrounds automatically into a clear PNG with alpha transparency.</p>
               <div class="flex items-center gap-4">
@@ -689,7 +608,6 @@
             </div>
           </div>
 
-          <!-- Preview Area -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
               <span class="text-xs font-bold text-slate-400 block mb-2">Original Image</span>
@@ -729,7 +647,6 @@
       ${renderRelatedTools("image-converter")}
     `;
 
-    // Elements
     let currentMode = "convert";
     let loadedImage = null;
     let originalFile = null;
@@ -767,7 +684,6 @@
     qualitySlider.addEventListener("input", () => qualityVal.textContent = `${qualitySlider.value}%`);
     bgThreshold.addEventListener("input", () => threshVal.textContent = bgThreshold.value);
 
-    // Tab switcher
     function setTab(mode) {
       currentMode = mode;
       [tabConvert, tabResize, tabBg].forEach(t => t.className = "flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white");
@@ -784,7 +700,7 @@
       } else {
         tabBg.className = "flex-1 py-2 text-xs font-bold rounded-lg transition bg-emerald-500 text-slate-950";
         ctrlBg.classList.remove("hidden");
-        targetFmt.value = "image/png"; // transparency needs PNG
+        targetFmt.value = "image/png";
       }
       if (loadedImage) processImage();
     }
@@ -830,7 +746,6 @@
       reader.readAsDataURL(file);
     }
 
-    // Aspect ratio lock
     resizeW.addEventListener("input", () => {
       if (keepAspect.checked && loadedImage) {
         const ratio = loadedImage.naturalHeight / loadedImage.naturalWidth;
@@ -862,20 +777,17 @@
       canvas.height = targetH;
       ctx.drawImage(loadedImage, 0, 0, targetW, targetH);
 
-      // BG removal mode: Chroma/Edge transparency removal
       if (currentMode === "bg") {
         const imgData = ctx.getImageData(0, 0, targetW, targetH);
         const data = imgData.data;
         const thresh = parseInt(bgThreshold.value) || 30;
-
-        // Sample corner pixels as background reference
         const bgR = data[0], bgG = data[1], bgB = data[2];
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
           const dist = Math.sqrt(Math.pow(r - bgR, 2) + Math.pow(g - bgG, 2) + Math.pow(b - bgB, 2));
           if (dist < thresh * 2.5) {
-            data[i + 3] = 0; // Transparent
+            data[i + 3] = 0;
           }
         }
         ctx.putImageData(imgData, 0, 0);
@@ -888,11 +800,9 @@
       procImg.src = outUrl;
       procDim.textContent = `${targetW} x ${targetH} px`;
 
-      // Calculate approximate output size
       const approxBytes = Math.round((outUrl.length - 'data:image/png;base64,'.length) * 3 / 4);
       procSize.textContent = `${(approxBytes / 1024).toFixed(1)} KB`;
 
-      // Set download link
       const ext = format === "image/png" ? "png" : format === "image/webp" ? "webp" : "jpg";
       btnDownload.href = outUrl;
       btnDownload.download = `processed_image_${Date.now()}.${ext}`;
@@ -904,9 +814,9 @@
     });
   }
 
-  // -------------------------------------------------------------
-  // TOOL 4: Image to PDF Converter (Multi-image, jsPDF)
-  // -------------------------------------------------------------
+  // ============================================================
+  // TOOL 4: Image to PDF Converter
+  // ============================================================
   function renderImageToPdf(container) {
     updateSEO({
       title: "Image to PDF Converter - Merge JPG, PNG, WebP to PDF Free",
@@ -924,14 +834,12 @@
       ${renderToolHeader("Image to PDF Converter", "Combine photos, receipts, and scans into a single organized PDF file.", "📄", "Multi-Image PDF Compiler")}
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-        <!-- Settings Bar -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800">
           <div>
             <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Page Size</label>
             <select id="pdf-pagesize" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200">
               <option value="a4" selected>A4 (210 × 297 mm)</option>
               <option value="letter">US Letter (8.5 × 11 in)</option>
-              <option value="fit">Auto-Fit to Image</option>
             </select>
           </div>
           <div>
@@ -951,7 +859,6 @@
           </div>
         </div>
 
-        <!-- Multi-upload dropzone -->
         <div id="pdf-dropzone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40 transition group">
           <input type="file" id="pdf-input" multiple accept="image/jpeg, image/png, image/webp" class="hidden" />
           <div class="flex flex-col items-center gap-2">
@@ -961,10 +868,8 @@
           </div>
         </div>
 
-        <!-- Image List -->
         <div id="pdf-list" class="mt-6 space-y-3"></div>
 
-        <!-- Action Bar -->
         <div id="pdf-actions" class="mt-6 hidden flex flex-col sm:flex-row gap-3">
           <button type="button" id="btn-gen-pdf" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-6 rounded-xl transition text-xs shadow-lg shadow-emerald-500/20">
             ⚡ Generate & Download PDF
@@ -1073,26 +978,17 @@
         const orient = container.querySelector("#pdf-orient").value;
         const margin = parseInt(container.querySelector("#pdf-margin").value);
 
-        const doc = new jsPDF({
-          orientation: orient,
-          unit: "mm",
-          format: pSize === "fit" ? "a4" : pSize
-        });
+        const doc = new jsPDF({ orientation: orient, unit: "mm", format: pSize });
 
         for (let i = 0; i < items.length; i++) {
           if (i > 0) doc.addPage();
           const img = new Image();
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.src = items[i].src;
-          });
+          await new Promise((resolve) => { img.onload = resolve; img.src = items[i].src; });
 
           const pageWidth = doc.internal.pageSize.getWidth();
           const pageHeight = doc.internal.pageSize.getHeight();
-
           const availW = pageWidth - (margin * 2);
           const availH = pageHeight - (margin * 2);
-
           const imgRatio = img.naturalWidth / img.naturalHeight;
           const pageRatio = availW / availH;
 
@@ -1122,9 +1018,9 @@
     });
   }
 
-  // -------------------------------------------------------------
+  // ============================================================
   // TOOL 5: WeChat Video Downloader
-  // -------------------------------------------------------------
+  // ============================================================
   function renderWechatDownloader(container) {
     updateSEO({
       title: "WeChat Video Downloader - Download Public Article Media Online",
@@ -1178,7 +1074,7 @@
       resultBox.innerHTML = `
         <div class="p-6 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center gap-3">
           <div class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-xs text-slate-300">Inspecting WeChat article metadata via CORS proxy...</span>
+          <span class="text-xs text-slate-300">Inspecting WeChat article metadata...</span>
         </div>
       `;
 
@@ -1187,7 +1083,6 @@
         const res = await fetchWithTimeout(proxyUrl, {}, 10000);
         const html = await res.text();
 
-        // Search for mpvideo or video_src tags
         const match = html.match(/data-src="([^"]+\.mp4[^"]*)"/) || html.match(/url:\s*'([^']+\.mp4[^']*)'/);
 
         if (match && match[1]) {
