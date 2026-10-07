@@ -32,6 +32,93 @@
   }
 
   // ============================================================
+  // REDDIT HANDLER — Uses Reddit's public JSON API (no auth needed)
+  // Avoids yt-dlp's datacenter IP block entirely
+  // ============================================================
+  async function fetchViaReddit(videoUrl) {
+    let cleanUrl = videoUrl.split("?")[0].replace(/\/+$/, "");
+    if (!cleanUrl.endsWith(".json")) {
+      cleanUrl = cleanUrl + ".json";
+    }
+
+    console.log("Fetching Reddit JSON API:", cleanUrl);
+
+    const proxies = [
+      "https://api.allorigins.win/raw?url=",
+      "https://corsproxy.io/?",
+      "https://api.codetabs.com/v1/proxy?quest="
+    ];
+
+    let lastError = null;
+
+    for (const proxy of proxies) {
+      try {
+        const proxyUrl = proxy + encodeURIComponent(cleanUrl);
+        const res = await fetchWithTimeout(proxyUrl, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        }, 15000);
+
+        if (!res.ok) {
+          lastError = new Error(`Proxy returned ${res.status}`);
+          continue;
+        }
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          lastError = new Error("Invalid JSON from Reddit");
+          continue;
+        }
+
+        const post = Array.isArray(data) ? data[0]?.data?.children?.[0]?.data : null;
+        if (!post) {
+          lastError = new Error("No post data in Reddit response");
+          continue;
+        }
+
+        let videoUrlOut = null;
+
+        // Method 1: Reddit-hosted video (v.redd.it)
+        if (post.media?.reddit_video?.fallback_url) {
+          videoUrlOut = post.media.reddit_video.fallback_url;
+        }
+
+        // Method 2: Preview video
+        if (!videoUrlOut && post.preview?.reddit_video_preview?.fallback_url) {
+          videoUrlOut = post.preview.reddit_video_preview.fallback_url;
+        }
+
+        // Method 3: Direct video file link
+        if (!videoUrlOut && post.url_overridden_by_dest) {
+          if (post.url_overridden_by_dest.match(/\.(mp4|webm|mov)$/i)) {
+            videoUrlOut = post.url_overridden_by_dest;
+          } else {
+            // External platform — let Yozora handle it
+            return await fetchViaYozora(post.url_overridden_by_dest);
+          }
+        }
+
+        if (!videoUrlOut) {
+          lastError = new Error("No video URL found in Reddit post");
+          continue;
+        }
+
+        console.log("✅ Reddit video found:", videoUrlOut);
+        return { url: videoUrlOut, platform: "Reddit" };
+
+      } catch (err) {
+        lastError = err;
+        console.warn("Reddit proxy attempt failed:", err.message);
+      }
+    }
+
+    throw lastError || new Error("All Reddit proxies failed");
+  }
+
+  // ============================================================
   // TOOL 1: All Video Downloader
   // ============================================================
   function renderVideoDownloader(container) {
@@ -206,12 +293,24 @@
           }
         }
 
-        // Strategy 2: Yozora (Vercel) for other platforms
-        try {
-          const y = await fetchViaYozora(url);
-          if (y && y.url) result = y;
-        } catch (err) {
-          console.warn("Yozora failed:", err);
+        // Strategy 2: Reddit → Reddit public JSON API (bypasses yt-dlp IP block)
+        if (platform && platform.name === "Reddit") {
+          try {
+            const r = await fetchViaReddit(url);
+            if (r && r.url) result = r;
+          } catch (err) {
+            console.warn("Reddit handler failed:", err);
+          }
+        }
+
+        // Strategy 3: Yozora (Vercel) for other platforms
+        if (!result) {
+          try {
+            const y = await fetchViaYozora(url);
+            if (y && y.url) result = y;
+          } catch (err) {
+            console.warn("Yozora failed:", err);
+          }
         }
 
         if (result && result.url) {
