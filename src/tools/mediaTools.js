@@ -43,23 +43,58 @@
   async function fetchMediaStream(videoUrl, options = {}) {
     const isAudio = options.isAudio || false;
     const quality = options.quality || "720";
-    const cleanUrl = videoUrl.split('?')[0]; // Strip tracking query parameters like ?stkn=...
+    // Clean tracking tags from url
+    const cleanUrl = videoUrl.split('?')[0].replace(/\/$/, "");
 
-    // 1. Instagram Dedicated API Resolver
+    // ------------------------------------------------------------
+    // 1. Dedicated Instagram Extractor Nodes
+    // ------------------------------------------------------------
     if (videoUrl.includes("instagram.com")) {
+      // Node A: SaveIG Resolver via CORS proxy
       try {
-        const igRes = await fetchWithTimeout(`https://api.v2.emily.is/api/instagram?url=${encodeURIComponent(cleanUrl)}`, {}, 6000);
+        const formData = new URLSearchParams();
+        formData.append("q", cleanUrl);
+        formData.append("t", "media");
+        formData.append("lang", "en");
+
+        const igRes = await fetchWithTimeout("https://corsproxy.io/?" + encodeURIComponent("https://saveig.app/api/ajaxSearch"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: formData.toString()
+        }, 7000);
+
         if (igRes.ok) {
-          const igData = await igRes.json();
-          const stream = igData.url || (igData.data && igData.data[0] ? igData.data[0].url : null);
-          if (stream) return { url: stream, title: "Instagram Video", engine: "IG-Direct" };
+          const resText = await igRes.text();
+          // Extract MP4 link from JSON/HTML string returned
+          const match = resText.match(/href=\\?"(https:\/\/[^"]+\.mp4[^"]*)\\?"/i) || resText.match(/(https:\/\/[^\s"'\\]+\.mp4[^\s"'\\]*)/i);
+          if (match && match[1]) {
+            let finalStreamUrl = match[1].replace(/\\/g, '');
+            return { url: finalStreamUrl, title: "Instagram Reel HD", engine: "SaveIG" };
+          }
         }
       } catch (e) {
-        console.warn("IG primary node failed, switching to cluster:", e);
+        console.warn("Instagram Node A failed:", e);
+      }
+
+      // Node B: Direct SnapInsta API
+      try {
+        const snapRes = await fetchWithTimeout(`https://api.v2.emily.is/api/instagram?url=${encodeURIComponent(cleanUrl)}`, {}, 6000);
+        if (snapRes.ok) {
+          const snapData = await snapRes.json();
+          const stream = snapData.url || (snapData.data && snapData.data[0] ? snapData.data[0].url : null);
+          if (stream) return { url: stream, title: "Instagram Video", engine: "IG-Snap" };
+        }
+      } catch (e) {
+        console.warn("Instagram Node B failed:", e);
       }
     }
 
-    // 2. Cobalt API Cluster
+    // ------------------------------------------------------------
+    // 2. Open-Source Cobalt API Nodes Cluster
+    // ------------------------------------------------------------
     for (const nodeUrl of COBALT_API_NODES) {
       try {
         const response = await fetchWithTimeout(nodeUrl, {
@@ -92,7 +127,9 @@
       }
     }
 
-    // 3. Serverless Yozora Relay
+    // ------------------------------------------------------------
+    // 3. Yozora Serverless Backup
+    // ------------------------------------------------------------
     try {
       const yozoraUrl = `${YOZORA_BASE}/api/download?url=${encodeURIComponent(videoUrl)}${isAudio ? '&audio=true' : ''}`;
       const res = await fetchWithTimeout(yozoraUrl, {}, 6000);
