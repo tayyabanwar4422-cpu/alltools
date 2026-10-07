@@ -11,14 +11,14 @@
   function renderHome(container) {
     updateSEO({
       title: "AllToolsHub - 12 Free Fast Online Web Utilities (No Installs, No Cost)",
-      description: "Access 12 free web tools: Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Numerology, Paint Calculator & Password Generator. Built by Tayyab Anwar.",
+      description: "Access 12 free web tools: TikTok Video Downloader, Image Converter, BG Remover, Image to PDF, Birth Chart, Numerology, Paint Calculator & Password Generator. Built by Tayyab Anwar.",
       path: "/",
       appName: "AllToolsHub Suite",
       breadcrumbs: [{ name: "Home", path: "/" }]
     });
 
     const tools = [
-      { key: "video-downloader", name: "All Video Downloader", icon: "🎬", tag: "TikTok, X, Reddit", desc: "Download HD video streams from TikTok, Twitter/X, Reddit, and 1000+ other social platforms.", link: "#/tools/video-downloader" },
+      { key: "video-downloader", name: "TikTok Video Downloader", icon: "🎵", tag: "No Watermark · MP4 + MP3", desc: "Download TikTok videos in HD without watermark. Free, no signup, works on mobile and desktop.", link: "#/tools/video-downloader" },
       { key: "image-converter", name: "Image Converter & BG Remover", icon: "🖼️", tag: "PNG, JPG, WebP + Cutout", desc: "Batch convert image formats, scale pixel dimensions, and remove backgrounds with client-side AI masking.", link: "#/tools/image-converter" },
       { key: "image-to-pdf", name: "Image to PDF Converter", icon: "📄", tag: "Multi-Image Compiler", desc: "Merge multiple JPG, PNG, and WebP pictures into a clean printable PDF with custom page geometry.", link: "#/tools/image-to-pdf" },
       { key: "wechat-downloader", name: "WeChat Video Downloader", icon: "💬", tag: "Public Article Media", desc: "Inspect and extract public embedded video media from WeChat official account articles.", link: "#/tools/wechat-downloader" },
@@ -43,11 +43,11 @@
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">Zero Server Friction.</span>
           </h1>
           <p class="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Download social video streams, convert and optimize graphic assets, calculate birth charts, construct PDFs, and inspect typography metrics. All calculations execute directly in your web browser.
+            Download TikTok videos without watermark, convert and optimize graphic assets, calculate birth charts, construct PDFs, and inspect typography metrics. All calculations execute directly in your web browser.
           </p>
           <div class="flex flex-wrap justify-center gap-3 pt-2">
             <a href="#/tools/video-downloader" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-emerald-500/20 hover:scale-105 transition-all">
-              ⚡ Explore Video Downloader
+              🎵 Download TikTok Videos
             </a>
             <a href="#/tools/image-converter" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 px-6 py-3 rounded-xl font-semibold text-sm transition-all">
               🖼️ Convert Images
@@ -229,7 +229,7 @@
 
           <h2 class="text-base font-bold text-white pt-2">3. External Links & Media Providers</h2>
           <p class="text-slate-400">
-            Our video downloading utilities interface with public media endpoints (such as TikTok, Twitter/X, and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
+            Our video downloading utilities interface with public media endpoints (such as TikTok's public API and CORS proxy mirrors) to fetch media streams requested by the user. We are not responsible for the privacy practices or content policies of third-party platforms.
           </p>
 
           <h2 class="text-base font-bold text-white pt-2">4. Contact Information</h2>
