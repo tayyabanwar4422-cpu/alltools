@@ -17,15 +17,6 @@
   // ============================================================
   const YOZORA_BASE = "https://tools-murex-phi.vercel.app";
 
-  // The Yozora project exposes its endpoint at one of these paths.
-  // We try them in order until one works.
-  const YOZORA_ENDPOINTS = [
-    YOZORA_BASE + "/api/download",
-    YOZORA_BASE + "/api/",
-    YOZORA_BASE + "/api",
-    YOZORA_BASE + "/download"
-  ];
-
   // Detect platform by URL pattern
   function detectPlatform(url) {
     if (!url) return null;
@@ -44,92 +35,109 @@
   }
 
   // ============================================================
-  // YOZORA FETCH — tries every possible endpoint path until one works
+  // YOZORA FETCH — Tries POST + JSON body first (Yozora's expected format),
+  // then falls back to other combinations.
   // ============================================================
   async function fetchViaYozora(videoUrl) {
+    const attempts = [
+      // POST with JSON body (most common pattern for downloader APIs)
+      { path: "/api/download", method: "POST", param: "url" },
+      { path: "/api/download", method: "POST", param: "link" },
+      { path: "/api/download", method: "POST", param: "videoUrl" },
+      { path: "/api", method: "POST", param: "url" },
+      { path: "/api", method: "POST", param: "link" },
+      // GET fallbacks
+      { path: "/api/download", method: "GET", param: "url" },
+      { path: "/api/download", method: "GET", param: "link" },
+      { path: "/api", method: "GET", param: "url" }
+    ];
+
     let lastError = null;
 
-    for (const endpoint of YOZORA_ENDPOINTS) {
+    for (const attempt of attempts) {
+      const fullUrl = YOZORA_BASE + attempt.path;
       try {
-        const fullUrl = `${endpoint}?url=${encodeURIComponent(videoUrl)}`;
-        console.log("Trying Yozora endpoint:", fullUrl);
+        let res;
 
-        const res = await fetchWithTimeout(fullUrl, {
-          method: "GET",
-          headers: { "Accept": "application/json" }
-        }, 20000);
+        if (attempt.method === "POST") {
+          const body = {};
+          body[attempt.param] = videoUrl;
+          console.log(`Trying Yozora POST ${attempt.path} with {"${attempt.param}": "..."}`);
+
+          res = await fetchWithTimeout(fullUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(body)
+          }, 25000);
+        } else {
+          const query = `${attempt.path}?${attempt.param}=${encodeURIComponent(videoUrl)}`;
+          console.log(`Trying Yozora GET ${query}`);
+
+          res = await fetchWithTimeout(YOZORA_BASE + query, {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+          }, 25000);
+        }
+
+        console.log(`→ Response: ${res.status} ${res.statusText}`);
 
         if (!res.ok) {
-          lastError = new Error(`HTTP ${res.status} from ${endpoint}`);
+          // Try to read the error body for diagnostics
+          let errBody = "";
+          try { errBody = await res.text(); } catch {}
+          lastError = new Error(`${attempt.method} ${attempt.path} → ${res.status}: ${errBody.slice(0, 200)}`);
+          console.warn("Yozora attempt failed:", lastError.message);
           continue;
         }
 
-        // Try JSON first
-        let data;
+        // Parse response
         const contentType = res.headers.get("content-type") || "";
+        let data;
         if (contentType.includes("application/json")) {
           data = await res.json();
         } else {
-          // Some endpoints return plain text URL
           const text = await res.text();
           if (text.trim().startsWith("http")) {
+            console.log("✅ Yozora success (plain URL):", attempt);
             return { url: text.trim(), platform: "Video" };
           }
           try { data = JSON.parse(text); } catch { data = null; }
         }
 
-        // Handle all possible response shapes
         if (!data) {
-          lastError = new Error("Empty response from " + endpoint);
+          lastError = new Error(`Empty response from ${attempt.path}`);
           continue;
         }
 
-        // Shape 1: { url: "..." }
-        if (data.url && typeof data.url === "string") {
-          return { url: data.url, platform: "Video" };
-        }
+        console.log("Yozora response:", data);
 
-        // Shape 2: { data: { url: "..." } }
-        if (data.data && data.data.url) {
-          return { url: data.data.url, platform: "Video" };
-        }
-
-        // Shape 3: { data: { play: "..." } } (TikTok style)
-        if (data.data && data.data.play) {
-          return { url: data.data.play, platform: "Video" };
-        }
-
-        // Shape 4: { formats: [...] }
+        // Handle all response shapes
+        if (data.url) { console.log("✅ Yozora success (data.url):", attempt); return { url: data.url, platform: "Video" }; }
+        if (data.data?.url) { console.log("✅ Yozora success (data.data.url):", attempt); return { url: data.data.url, platform: "Video" }; }
+        if (data.data?.play) { console.log("✅ Yozora success (data.data.play):", attempt); return { url: data.data.play, platform: "Video" }; }
+        if (data.video_url) { console.log("✅ Yozora success (data.video_url):", attempt); return { url: data.video_url, platform: "Video" }; }
+        if (data.download_url) { console.log("✅ Yozora success (data.download_url):", attempt); return { url: data.download_url, platform: "Video" }; }
+        if (data.link) { console.log("✅ Yozora success (data.link):", attempt); return { url: data.link, platform: "Video" }; }
         if (Array.isArray(data.formats) && data.formats.length > 0) {
-          const best = data.formats
-            .filter(f => f.url)
-            .sort((a, b) => (b.height || 0) - (a.height || 0))[0];
-          if (best && best.url) {
-            return { url: best.url, platform: "Video" };
-          }
+          const best = data.formats.filter(f => f.url).sort((a, b) => (b.height || 0) - (a.height || 0))[0];
+          if (best?.url) { console.log("✅ Yozora success (formats[0]):", attempt); return { url: best.url, platform: "Video" }; }
         }
-
-        // Shape 5: { links: [...] }
-        if (Array.isArray(data.links) && data.links.length > 0) {
-          const first = data.links.find(l => l.url || l.link);
-          if (first) {
-            return { url: first.url || first.link, platform: "Video" };
-          }
-        }
-
-        // Shape 6: array response [{ url: "..." }]
-        if (Array.isArray(data) && data.length > 0 && data[0].url) {
+        if (Array.isArray(data) && data[0]?.url) {
+          console.log("✅ Yozora success (array[0]):", attempt);
           return { url: data[0].url, platform: "Video" };
         }
 
-        lastError = new Error("Unrecognized response shape from " + endpoint);
+        lastError = new Error(`Unrecognized response shape from ${attempt.path}`);
       } catch (err) {
         lastError = err;
-        console.warn("Yozora endpoint failed:", endpoint, err.message);
+        console.warn(`Yozora ${attempt.method} ${attempt.path} exception:`, err.message);
       }
     }
 
-    throw lastError || new Error("All Yozora endpoints failed");
+    throw lastError || new Error("All Yozora attempts failed");
   }
 
   // ============================================================
@@ -255,7 +263,7 @@
       try {
         let result = null;
 
-        // ---- Strategy 1: TikTok → TikWM (best for TikTok) ----
+        // ---- Strategy 1: TikTok → TikWM ----
         if (platform && platform.name === "TikTok") {
           try {
             const res = await fetchWithTimeout(`${CONFIG.TIKWM_API}?url=${encodeURIComponent(url)}`);
@@ -284,42 +292,18 @@
               return;
             }
           } catch (err) {
-            console.warn("TikWM failed, trying Yozora:", err);
+            console.warn("TikWM failed:", err);
           }
         }
 
-        // ---- Strategy 2: Yozora (Vercel) → handles YouTube, Instagram, X, etc. ----
+        // ---- Strategy 2: Yozora (Vercel serverless) ----
         try {
           const y = await fetchViaYozora(url);
           if (y && y.url) {
             result = y;
-            console.log("✅ Yozora succeeded:", y);
           }
         } catch (err) {
           console.warn("Yozora failed:", err);
-        }
-
-        // ---- Strategy 3: Cobalt public (last resort for other platforms) ----
-        if (!result) {
-          try {
-            const apiEndpoints = [CONFIG.COBALT_API, ...(CONFIG.COBALT_FALLBACK_APIS || [])];
-            for (const endpoint of apiEndpoints) {
-              try {
-                const resp = await fetchWithTimeout(endpoint, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                  body: JSON.stringify({ url, videoQuality: "720" })
-                }, 8000);
-                if (resp.ok) {
-                  const data = await resp.json();
-                  if (data && (data.url || data.audio)) {
-                    result = { url: data.url || data.audio, platform: platform?.name || "Video" };
-                    break;
-                  }
-                }
-              } catch {}
-            }
-          } catch {}
         }
 
         // ---- Success — display video ----
@@ -342,7 +326,6 @@
           `;
           showToast("Stream found successfully!");
         } else {
-          // ---- All methods failed ----
           resultBox.innerHTML = `
             <div class="p-5 bg-slate-950 rounded-xl border border-amber-500/40 fade-up space-y-3">
               <div class="flex items-center gap-2 text-amber-400 text-xs font-bold">
@@ -373,7 +356,7 @@
   }
 
   // ============================================================
-  // TOOL 2: Dedicated YouTube Video & MP3 Downloader
+  // TOOL 2: YouTube Video & MP3 Downloader
   // ============================================================
   function renderYouTubeDownloader(container) {
     updateSEO({
@@ -383,8 +366,7 @@
       appName: "YouTube Video & MP3 Downloader",
       faqs: [
         { q: "Can I download only the audio as an MP3?", a: "Yes. Toggle the 'MP3 (Audio)' tab, select your preferred bitrate (up to 320 kbps), and click fetch." },
-        { q: "What is the maximum video quality supported?", a: "We support up to 1080p Full HD video streams when provided by the YouTube source." },
-        { q: "Is there a video duration limit?", a: "Most public YouTube videos up to 3 hours long can be processed easily in seconds." }
+        { q: "What is the maximum video quality supported?", a: "We support up to 1080p Full HD video streams when provided by the YouTube source." }
       ],
       breadcrumbs: [{ name: "Home", path: "/" }, { name: "YouTube Downloader", path: "/tools/youtube-downloader" }]
     });
